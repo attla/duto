@@ -1,0 +1,60 @@
+{
+  "name": "duto",
+  "description": "Static framework for web artisans",
+  "version": "0.20260721.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "files": ["bin", "src"],
+  "bin": {
+    "duto": "./bin/duto.js"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@preact/signals": "catalog:",
+    "@swc/core": "^1.15.21",
+    "chokidar": "catalog:",
+    "citty": "catalog:",
+    "consola": "catalog:",
+    "filesize": "catalog:",
+    "pathe": "catalog:",
+    "preact": "catalog:",
+    "preact-render-to-string": "^6.6.6",
+    "t0n": "workspace:^",
+    "vite": "catalog:",
+    "wouter-preact": "catalog:"
+  },
+  "devDependencies": {
+    "@minify-html/node": "^0.18.1",
+    "@preact/preset-vite": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "bun-types": "catalog:",
+    "typescript": "catalog:"
+  },
+  "packageManager": "bun@1.3.14",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "author": "Zunq <open-source@zunq.com>",
+  "license": "MIT",
+  "homepage": "https://zunq.dev",
+  "repository": "git://github.com/attla/duto",
+  "bugs": "https://github.com/attla/duto/issues",
+  "keywords": [
+    "SSG",
+    "application",
+    "framework",
+    "router",
+    "serverless",
+    "typescript",
+    "cloudflare",
+    "workers",
+    "vercel",
+    "bun"
+  ]
+}

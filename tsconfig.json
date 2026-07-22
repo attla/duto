@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "types": ["bun-types", "node"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "useDefineForClassFields": false,
+
+    /* Linting */
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "rootDir": "./",
+    "paths": {
+      "~/*": ["./src/cli/*"],
+      "@/*": ["./src/compiler/*"],
+      "#/*": ["./src/client/*"],
+      "$/*": ["./src/*"],
+      "!/*": ["./*"]
+    }
+  },
+  "include": ["src/**/*", "tests/**/*", "global.d.ts"],
+  "exclude": ["node_modules", "dist", ".rajt", ".duto"]
+}
