@@ -46,9 +46,11 @@ export default async function getI18n(meta: Metadata) {
 export const locales = ${JSJSON(mod.locales)}
 export const messages = ${JSJSON(mod.messages)}
 export const routes = ${JSJSON(mod.routes)}
-export const routeMap = ${JSJSON(mod.routeMap)}
-export const pageRoutes = ${JSJSON(mod.pageRoutes)}
+export const routeMap = ${JSJSON(i18n.routeMap)}
+export const pageRoutes = ${JSJSON(i18n.pageRoutes)}
 export const options = ${JSJSON(mod.options)}
 `
+
+  // console.error(i18n.string)
   return i18n
 }

@@ -1,7 +1,9 @@
+// @ts-ignore
+import ':duto/client/hmr'
+
 import { render, hydrate, h } from 'preact'
 import { Switch, Route, Router } from 'wouter-preact'
-import { useLocation,
-  useParams, useSearchParams, } from 'wouter-preact'
+import { useLocation, useParams, useSearchParams, } from 'wouter-preact'
 
 import {
   fallbackLocale, locales, messages, routes, routeMap,
@@ -34,22 +36,16 @@ window.$duto = {
   setSearch: {},
 }
 import { renderRoute } from './router'
-import { navigate } from 'wouter-preact/use-hash-location'
+// import { navigate } from 'wouter-preact/use-hash-location'
 
-if (location?.hostname === 'localhost' || location?.hostname === '127.0.0.1') {
-  (new WebSocket(`ws://${location.host}`, 'duto')).onmessage = ({ data }) => data === 'reload' && location.reload()
-  // (new EventSource(`http://${location.host}/.events`)).onmessage = ({ data }) => data === 'reload' && location.reload()
+for (let [tag, el, opts] of [
+  ['i-i', EI18n],
+  ['i-l', Link, { extends: 'a' }],
+  ['i-s', Island],
+] as [string, new () => HTMLElement, ElementDefinitionOptions?][]) {
+  if (!customElements.get(tag))
+    customElements.define(tag, el, opts)
 }
-
-if (!customElements.get('i-i'))
-  customElements.define('i-i', EI18n)
-
-if (!customElements.get('i-l'))
-  customElements.define('i-l', Link, { extends: 'a' })
-
-if (!customElements.get('i-s'))
-  customElements.define('i-s', Island)
-
 // Router.load(SRoutes).mount(views)
 
 // render(h(Router, null,

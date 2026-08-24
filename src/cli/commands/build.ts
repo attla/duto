@@ -1,20 +1,21 @@
-import { defineCommand } from 'citty'
 import { build } from 'vite'
 import { filesize } from 'filesize'
-import { wait, error, rn, event } from 't0n/log'
-import { getConfig } from '~/utils'
-import { meta } from '@/vite-plugin'
+import { command } from 't0n/cli'
 import { dim, underline } from 't0n/color'
+import { wait, error, rn, event } from 't0n/log'
+import { meta } from '@/vite-plugin'
+import { getConfig } from '~/utils'
 import type { SummaryMetadata } from '@/types'
 
-export default defineCommand({
+export default command({
 	meta: {
 		name: 'build',
 		description: '🗂️  Perform the build for production\n',
 	},
 	args: {
 	},
-	async run({ args }) {
+  async run({ args }) {
+    global.__hmr = !!args?.hmr
     wait('Building..')
 
 		try {

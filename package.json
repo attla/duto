@@ -1,13 +1,11 @@
 {
   "name": "duto",
   "description": "Static framework for web artisans",
-  "version": "0.20260721.0",
+  "version": "0.260808.0",
   "type": "module",
   "main": "./src/index.ts",
-  "files": ["bin", "src"],
-  "bin": {
-    "duto": "./bin/duto.js"
-  },
+  "files": ["src"],
+  "bin": "./src/cli/index.ts",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -21,7 +19,7 @@
     "pathe": "catalog:",
     "preact": "catalog:",
     "preact-render-to-string": "^6.6.6",
-    "t0n": "workspace:^",
+    "t0n": "0.x",
     "vite": "catalog:",
     "wouter-preact": "catalog:"
   },

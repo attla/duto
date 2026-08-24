@@ -6,6 +6,7 @@ export {}
 declare global {
   // Duto
   var __st: number
+  var __hmr: boolean
 
   // Bun:test
   var test: typeof import('bun:test').test

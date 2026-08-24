@@ -1,5 +1,6 @@
 import { h, type JSX } from 'preact'
 import { local } from '#/storage'
+import { navigate } from '../'
 
 const accepted = (lang: string | undefined, locales: string[] = [], fallback: string) => lang && locales.includes(lang) ? lang : fallback
 
@@ -63,13 +64,23 @@ let _routeMap: Record<string, string> = {}
 
 let _locale: string = ''
 let _detected: string = ''
+export let _prefixed: boolean = false
+
+export const isPrefixed = () => _prefixed
 
 export const getLocale = () => {
   if (typeof window === 'undefined') {
     return cached() || _detected
   } else {
     const matched = window?.location?.pathname.match(new RegExp(`^/(${_locales.join('|')})(/|$)`))
-    return matched && matched[1] ? matched[1] : cached() || _detected
+    if (matched && matched[1]) {
+      _prefixed = true
+      return matched[1]
+    }
+
+    _prefixed = false
+    return cached() || _detected
+    // return matched && matched[1] ? matched[1] : cached() || _detected
   }
 }
 
@@ -85,13 +96,15 @@ export default function i18n(
   routes: Record<string, Record<string, string>>,
   routeMap: Record<string, string>,
 ) {
-  _detected = detect(locales, fallbackLocale)
-  // _locale = fallbackLocale
-  _locale = typeof window === 'undefined' ? fallbackLocale : getLocale()
   _locales = locales
   _messages = messages
   _routes = routes
   _routeMap = routeMap
+  _detected = detect(locales, fallbackLocale)
+  _locale = typeof window === 'undefined' ? fallbackLocale : getLocale()
+
+  // console.error(routes)
+  // console.error(routeMap)
 }
 
 export const cache = (val: string) => local.set('lang', accepted(val, _locales, ''))
@@ -104,8 +117,8 @@ export const updateWidth = (el: HTMLSelectElement) => {
     el.style.width = (length * 15.7)+ 'px'
   }
 }
-export const updatePickers = (lang = '') => {
-  lang = accepted(lang, _locales, _locale)
+export const updatePickers = (lang?: string) => {
+  lang ??= accepted(lang, _locales, _locale)
 
   document.querySelectorAll('.locale-select').forEach(el => {
     const select = el.querySelector('select')
@@ -117,17 +130,28 @@ export const updatePickers = (lang = '') => {
 }
 
 export const route = (route = '', lang?: string) => {
-  lang = accepted(lang, _locales, _locale)
+  lang ??= accepted(lang, _locales, _locale)
   const path = _routeMap[route]
   return _routes[lang][path ? path : route] || _routes[lang]?.notfound || undefined
 }
-export const redirect = (r = '', lang?: string) => {
-  lang = accepted(lang, _locales, _locale)
-  const path = '/'+ lang + (r ? '/'+ route(r, lang) : '')
 
-  if (!window.location.pathname.endsWith(path))
-    window.location.pathname = path
+export const redirect = (key = '', lang?: string) => r(key, lang)
+export const r = (key: string, lang?: string) => {
+  lang ??= accepted(lang, _locales, _locale)
+  const path = '/'+ lang + (key ? '/'+ route(key, lang) : '')
+
+  if (!location.pathname.endsWith(path))
+    navigate(path)
+
+  // return '/' + lang + '/' + (key in _routes[lang] ? _routes[lang][key] : key)
 }
+// export const redirect = (r = '', lang?: string) => {
+//   lang = accepted(lang, _locales, _locale)
+//   const path = '/'+ lang + (r ? '/'+ route(r, lang) : '')
+
+//   if (!location.pathname.endsWith(path))
+//     location.pathname = path
+// }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -236,11 +260,6 @@ export const tl = (lang: string) =>
 
 //   return key?.replace(/^_+/, '')
 // }
-export const r = (key: string, lang?: string) => {
-  lang ??= accepted(lang, _locales, _locale)
-
-  return '/' + lang + '/' + (key in _routes[lang] ? _routes[lang][key] : key)
-}
 export const d = (str: string, format?: string, lang?: string) => {
   lang ??= accepted(lang, _locales, _locale)
 

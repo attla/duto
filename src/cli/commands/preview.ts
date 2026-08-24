@@ -1,13 +1,13 @@
-import { defineCommand } from 'citty'
-import { withPort } from 't0n/port'
-import { error, log, rn } from 't0n/log'
-import { getConfig, preview } from '~/utils'
-import { _root } from '@/utils'
-
-import { args } from './dev'
+import { command } from 't0n/cli'
 import { dim } from 't0n/color'
+import { error, log, rn } from 't0n/log'
+import { withPort } from 't0n/port'
+import { getMetadata } from '@/meta'
+import { _root } from '@/utils'
+import { args } from './dev'
+import { getConfig, preview } from '~/utils'
 
-export default defineCommand({
+export default command({
   meta: {
 		name: 'preview',
 		description: '💻  Locally preview production build\n',
@@ -20,7 +20,7 @@ export default defineCommand({
 
     withPort(desiredPort, async (port) => {
       try {
-        await preview({port, host})
+        await preview(await getMetadata(config.root as string, config.pagesDir as string), host, port)
         log(`Running on http://${host}:${port}${global?.__st ? dim(` in ${Math.ceil(performance.now() - global.__st)} ms`) : ''}`)
       } catch (e: any) {
         error('Preview failed:', e?.message || e)
@@ -29,6 +29,5 @@ export default defineCommand({
         rn()
       }
     })
-
 	},
 })

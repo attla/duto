@@ -6,9 +6,11 @@ import type { UserConfig } from 'vite'
 import { resolveExtension } from '@/file'
 import config from '@/vite-plugin'
 import { _root } from '@/utils'
-import { match } from '@/routes'
+import { match, match404 } from '@/routes'
+import type { Metadata, PluginOptions } from '@/types'
+import { getMetadata } from '@/meta'
 
-export async function getConfig(name = 'config'): Promise<UserConfig> {
+export async function getConfig(name = 'config'): Promise<UserConfig & PluginOptions> {
   let opts = {} as UserConfig
   const file = resolveExtension(name)
   if (file) opts = await IMPORT(join(_root, file), 'default')
@@ -43,10 +45,11 @@ export function reload() {
   }
 }
 
-export function preview({
-  host = '0.0.0.0',
-  port = 4173,
-}: { host?: string, port?: number } = {}) {
+export function preview(
+  meta: Metadata,
+  host: string = '0.0.0.0',
+  port: number = 4173
+) {
   return Bun.serve({
     hostname: host,
     port,
@@ -80,8 +83,9 @@ export function preview({
         return
       }
 
-      let route: string | undefined
       let status = 500
+      let route: string | undefined
+      let matched: Bun.MatchedRoute | null | undefined
 
       try {
         let res: Response
@@ -90,21 +94,29 @@ export function preview({
         let file = Bun.file(join(_root, dist, path))
 
         if (await file.exists()) {
-          route = path
+          // route = path
           res = new Response(file)
         } else {
-          const matched = match(path)
-          route = matched?.name || '' // TODO: obter o notfound correspodente..
+          matched = match(path)
+
+          // console.log(matched)
+          route = matched?.name || match404(meta, path)
 
           res = new Response(null, { status: 404 })
 
-          for (const asset of matched && matched.kind === 'exact' ? [
-            `${path}${path === '/' ? 'index' : ''}.html`,
-            join(path, 'index.html'),
-          ] : ['index.html']) {
-            file = Bun.file(join(_root, dist, asset))
+          // for (const asset of path !== '/' && matched && matched.kind === 'exact' ? [
+          //   path,
+          //   join(path, 'index'),
+          // ] : ['index']) {
+          for (const asset of [
+            path,
+            join(path, 'index'),
+            'index',
+          ]) {
+            file = Bun.file(join(_root, dist, asset +'.html'))
 
             if (await file.exists()) {
+              // if (route === '/' || !route) route = asset
               res = new Response(file)
               break
             }
@@ -117,15 +129,17 @@ export function preview({
         status = 500
         throw err
       } finally {
-        const elapsed = `${Math.max(1, Math.ceil(performance.now() - start))}ms`
+        if (route || matched) {
+          const elapsed = `${Math.max(1, Math.ceil(performance.now() - start))}ms`
 
-        console.log([
-          gray(Datte.dateTime()),
-          getStatusColor(status),
-          path,
-          route && route !== path ? gray(route) : '',
-          gray(elapsed),
-        ].filter(Boolean).join(' '))
+          console.log([
+            gray(Datte.dateTime()),
+            getStatusColor(status),
+            path,
+            route && route !== path ? gray(route) : '',
+            gray(elapsed),
+          ].filter(Boolean).join(' '))
+        }
       }
     },
   })

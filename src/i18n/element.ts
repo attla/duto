@@ -1,13 +1,14 @@
 import { local } from '#/storage'
-import { t } from './client'
+import { t, _prefixed } from './client'
 
 export default class EI18n extends HTMLElement {
   static observedAttributes = ['s']
   #builded = false
   #unsubscribe: (() => void) | null = null
 
-  connectedCallback() { // @ts-ignore
-    this.#unsubscribe = local.subscribe('lang', e => this.build(e.val))
+  connectedCallback() {
+    if (!_prefixed) // @ts-ignore // TODO: talvez usar função para obter o valor atual..
+      this.#unsubscribe = local.subscribe('lang', e => this.build(e.val))
 
     if (document.readyState === 'interactive' || document.readyState === 'complete') {
       this.build()

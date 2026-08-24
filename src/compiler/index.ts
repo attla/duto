@@ -114,10 +114,14 @@ export async function renderPage(
 
     const pathname = resolveStaticOutputPath(page, prop.routeParams)
     // TODO: melhorar isso para impedir erros do wouter e afins
-    globalThis.location = { pathname: '/'+ (pathname === 'index' ? '' : pathname) }
-    globalThis.window = { $duto: { sroutes: meta.spages, navigate: {} } }
-
-    globalThis.window.$duto.route = { pattern: page.pattern, params: prop.routeParams, path: globalThis.location.pathname }
+    // @ts-ignore
+    global.location = { pathname: '/'+ (pathname === 'index' ? '' : pathname) }
+    // @ts-ignore
+    global.window = { $duto: {
+      sroutes: meta.spages,
+      navigate: {},
+      route: { pattern: page.pattern, params: prop.routeParams, path: global.location.pathname },
+    } }
 
     let html = ''
 
@@ -146,7 +150,7 @@ export async function renderPage(
       assets.push(normalizeId(dep.path))
 
 
-    html = buildHtml(assets, html, needsClient, allProps, pattern, islands)
+    html = buildHtml(assets, html) //, needsClient, allProps, pattern, islands)
     // html = selfCloseEmptyTags(String(minify.minify(
     //   Buffer.from(buildHtml(assets, html, needsClient, allProps, pattern, islands)),
     //   {}
@@ -206,10 +210,10 @@ export async function renderPage(
 function buildHtml(
   _assets: string[],
   html: string,
-  needsClient: boolean,
-  props?: StaticProps,
-  routePattern?: string,
-  islands?: Island[],
+  // needsClient: boolean,
+  // props?: StaticProps,
+  // routePattern?: string,
+  // islands?: Island[],
 ): string {
   if (!(html.includes('<body') || html.includes('<html') || html.includes('<head')))
     html = wrapHtml(html)

@@ -2,7 +2,7 @@
 import type { FunctionComponent, VNode } from 'preact'
 
 export type PluginOptions = {
-  rootDir?: string,
+  root?: string,
   // Directory to scan for pages, relative to Vite root. Default: "./pages"
   pagesDir?: string,
 }
@@ -45,6 +45,7 @@ export type Metadata = {
   map: Map<string, FileMetadata>,
   violations: Map<string, DepMetadata[]>,
   layouts: Map<string, IRoute>, // all layouts
+  nf: Map<string, IRoute>, // all 404
   pages: Map<string, IRoute>, // all
   spages: Set<string>, // ssg pages
   routes: Routes, // client-side
@@ -75,10 +76,12 @@ export type GetStaticProps =
   | (() => StaticProps[] | Promise<StaticProps[]>)
 export type StaticProps = Record<string, unknown>
 
-/**
- * getProps — browser-only.
- * Receives route params and returns props for the component
- */
+/** browser-only */
+// export type $duto = {
+//   sroutes: Set<string>,
+//   navigate: {},
+//   route: { pattern: string, params: RouteParams, path: string },
+// }
 export type GetProps = (params: RouteParams) => StaticProps | Promise<StaticProps>
 export type RouteParams = Record<string, string | string[] | undefined>
 

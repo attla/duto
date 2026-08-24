@@ -1,57 +1,28 @@
-import { defineCommand, runMain, renderUsage } from 'citty'
-import type { ArgsDef, CommandDef } from 'citty'
-import { createConsola } from 'consola'
-import { logo } from 't0n/log'
-import { isColorSupported, gray } from 't0n/color'
-import { version as dutoVersion } from '!/package.json'
+#!/usr/bin/env bun
 
-// import dev from './commands/dev'
-import dev from './commands/dev'
-import build from './commands/build'
-import preview from './commands/preview'
-
-const name = 'Duto CLI'
-const version = [name, isColorSupported ? gray('v'+dutoVersion) : dutoVersion].join(' ')
-
-const _args = process.argv.slice(2)
-const length = _args.length
-if (!length || (length === 1 && ['-v', '--version', '--v', '-version'].includes(_args[0]))) {
-  console.log(version)
+if (!process?.isBun || typeof Bun === 'undefined') {
+  console.error('Error: "Bun" is not available. Please install:')
+  console.log('  curl -fsSL https://bun.sh/install | bash')
   process.exit(0)
 }
 
-console.log(`\n${logo} ${version}\n`)
+global.__st = performance.now()
 
-const consola = createConsola({ formatOptions: {date: false} })
-async function showUsage<T extends ArgsDef = ArgsDef>(cmd: CommandDef<T>, parent?: CommandDef<T>) {
-  try {
-    consola.log((await renderUsage(cmd, parent)).split('\n').slice(1).join('\n') + '\n')
-  } catch (error) {
-    consola.error(error)
-  }
-}
+import { join } from 'pathe'
+import { cli } from 't0n/cli'
+import { version } from '!/package.json'
 
-const main = defineCommand({
-  meta: {
+if (typeof document === 'undefined' && import.meta.main) {
+  const cmd = (c: string) => join(import.meta.dirname, 'commands', c)
+
+  cli({
     name: 'duto',
-    version: '',
-    description: name,
-  },
-  subCommands: {
-    dev,
-    build,
-    preview,
-    // deploy,
-    // routes,
-    // endpoints: routes,
-    // migrate,
-    // make,
-    // 'make:config': make,
-    // 'make:enum': make,
-    // 'make:route': make,
-    // 'make:action': make,
-    // 'make:endpoint': make,
-  },
-})
-
-runMain(main, { rawArgs: length ? undefined : ['-h'], showUsage })
+    description: 'Duto CLI',
+    version,
+    commands: {
+      dev: cmd('dev'),
+      build: cmd('build'),
+      preview: cmd('preview'),
+    }
+  })
+}

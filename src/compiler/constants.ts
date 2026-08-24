@@ -17,6 +17,8 @@ export const BROWSER_ONLY = [
 ]
 export const BROWSER_ONLY_SET = new Set(BROWSER_ONLY)
 
+export const LAYOUT_NAMES = ['_layout', 'layout']
+export const NF_NAMES = ['404', 'not-found']
 export const FILE_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js'] as const
 export const CONFIG_EXTENSIONS = ['json', 'toml', 'yaml'] as const
 export const EXTENSIONS = [...FILE_EXTENSIONS, ...CONFIG_EXTENSIONS] as const

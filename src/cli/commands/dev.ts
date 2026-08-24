@@ -1,11 +1,10 @@
-import { defineCommand } from 'citty'
-// import { build, preview } from 'vite'
+import { command, watch, killProcess } from 't0n/cli'
+import { dim } from 't0n/color'
+import { error, log, rn } from 't0n/log'
 import { withPort } from 't0n/port'
-import { error, event, log, rn, wait } from 't0n/log'
+import { getMetadata } from '@/meta'
 import { _root } from '@/utils'
 import { getConfig, preview, reload } from '~/utils'
-import { watch } from 't0n/cli'
-import { spawn, type ChildProcess } from 'node:child_process'
 
 export const args = {
   port: {
@@ -21,7 +20,7 @@ export const args = {
   },
 }
 
-export default defineCommand({
+export default command({
   meta: {
 		name: 'dev',
 		description: '🧪  Start dev server\n',
@@ -32,69 +31,11 @@ export default defineCommand({
 		const desiredPort = args.port ? Number(args.port) : (config?.preview?.port ? Number(config.preview.port) : 3000)
     const host = args.host ? String(args.host) : (config?.preview?.host ? String(config.preview.host) : 'localhost')
 
-    // const _build = async () => {
-    //   return await build(await getConfig())
-    // }
-
-    // let buildProcess: ChildProcess | null = null
-    // const _build = async () => {
-    //   if (buildProcess) await killProcess(buildProcess)
-
-    //   return new Promise<void>((resolve, reject) => {
-    //     let timeoutId: NodeJS.Timeout | null = null
-
-    //     buildProcess = spawn('duto', ['build'], {
-    //       // stdio: 'ignore',
-    //       stdio: ['inherit', 'ignore', 'inherit', 'ipc'],
-    //       shell: process.platform === 'win32'
-    //     })
-
-    //     buildProcess.on('close', (code) => {
-    //       if (timeoutId) clearTimeout(timeoutId)
-    //       buildProcess = null
-
-    //       if (code === 0) {
-    //         resolve()
-    //       } else {
-    //         reject(new Error(`Build failed with code ${code}`))
-    //       }
-    //     })
-
-    //     buildProcess.on('error', (error) => {
-    //       if (timeoutId) clearTimeout(timeoutId)
-    //       buildProcess = null
-    //       reject(error)
-    //     })
-    //   })
-    // }
-
-		// const killProcess = async (app: ChildProcess | null) => {
-		// 	if (!app) return null
-		// 	// event('Stopping..')
-		// 	try {
-		// 		if (!app?.killed) {
-		// 			app.kill('SIGTERM')
-		// 			await wait(1000)
-
-		// 			if (!app?.killed) { // force kill
-		// 				app.kill('SIGKILL')
-		// 				await wait(1000)
-		// 			}
-		// 		}
-
-		// 		return null
-		// 	} catch (e) {
-		// 		error('Error stopping:', e)
-		// 	}
-
-		// 	return null
-    // }
-
     let buildProcess: Bun.Subprocess | null = null
 
     const _build = async () => {
       if (buildProcess) await killProcess(buildProcess)
-      buildProcess = Bun.spawn(['duto', 'build'], {stdin: 'inherit', stdout: 'ignore', stderr: 'inherit'})
+      buildProcess = Bun.spawn(['duto', 'build', '--hmr'], {stdin: 'inherit', stdout: 'ignore', stderr: 'inherit'})
 
       try {
         const code = await buildProcess.exited
@@ -103,26 +44,6 @@ export default defineCommand({
           throw new Error(`Build failed with code ${code}`)
       } finally {
         buildProcess = null
-      }
-    }
-
-    const killProcess = async (proc: Bun.Subprocess | null) => {
-      if (!proc || proc.exitCode !== null) return
-
-      try {
-        proc.kill('SIGTERM')
-
-        const exited = await Promise.race([
-          proc.exited.then(() => true),
-          new Promise(r => setTimeout(r, 1000)).then(() => false),
-        ])
-
-        if (!exited && proc.exitCode === null) {
-          proc.kill('SIGKILL')
-          await proc.exited
-        }
-      } catch (e) {
-        error('Error stopping:', e)
       }
     }
 
@@ -141,10 +62,9 @@ export default defineCommand({
 
       try {
         await _build()
+        await preview(await getMetadata(config.root as string, config.pagesDir as string), host, port)
 
-        await preview({ port, host })
-
-        log(`Running on http://${host}:${port}`)
+        log(`Running on http://${host}:${port}${global?.__st ? dim(` in ${Math.ceil(performance.now() - global.__st)} ms`) : ''}`)
 
 				watch(async () => {
           await _build()
@@ -155,7 +75,6 @@ export default defineCommand({
 
           return false
         })
-
       } catch (e: any) {
         error(e)
         process.exit(0)

@@ -10,7 +10,7 @@ import { readdirSync } from 'node:fs'
 import { IMPORT, JSJSON, newID } from 't0n'
 
 import { getAliases } from './aliases'
-import { EXT_RE, DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE } from './constants'
+import { EXT_RE, DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE, NF_NAMES } from './constants'
 
 import { USE_CLIENT_RE } from './constants'
 import { parseSync } from '@swc/core'
@@ -106,8 +106,9 @@ export async function parsePage(page: IRoute, meta: Metadata) {
 // TODO: https://github.com/cloudflare/vinext/blob/adfc2236cba5f7cde63f32f6fb35c0d892428376/packages/vinext/src/routing/file-matcher.ts#L90
 export async function getPages(meta: Metadata) {
   const files = readdirSync(join(meta.root, meta.dir), {recursive: true})
-  const pages = new Map<string, IRoute>()
+  const nf = new Map<string, IRoute>()
   const layouts = new Map<string, IRoute>()
+  const pages = new Map<string, IRoute>()
   const spages = new Set<string>()
   const routes: IRoute[] = []
 
@@ -118,7 +119,7 @@ export async function getPages(meta: Metadata) {
     const fullFilePath = join(meta.root, meta.dir, file)
     const { pattern, params } = filePathToWouterPattern(file)
 
-    const name = file.replace(EXT_RE, '').split('/').pop()
+    const name = file.replace(EXT_RE, '').split('/').pop() as string
 
     const fileMeta = meta.map.get(fullFilePath)!
     const mod = (await IMPORT(fullFilePath)) as PageModule
@@ -131,13 +132,12 @@ export async function getPages(meta: Metadata) {
       fullFilePath,
       pattern,
       params,
-      is404: name ? ['404', 'not-found'].includes(name) : false,
+      is404: name ? NF_NAMES.includes(name) : false,
       isDynamic: DYNAMIC_RE.test(file),
       isInternal: INTERNAL_RE.test(file),
 
       importName: newID(),
 
-      // TODO: gambeta 222
       mod,
       content: fileMeta.content,
       islands: [],
@@ -145,9 +145,6 @@ export async function getPages(meta: Metadata) {
       hasGetStaticProps: typeof mod.getStaticProps === 'function',
       hasGetProps: typeof mod.getProps === 'function',
       isClientOnly: USE_CLIENT_RE.test(fileMeta.content),
-
-      // TODO: gambeta para pegar as info das rotas antes de rendeziar a pagina
-      // ...(await parsePage({fullFilePath, filePath: file} as IRoute, meta))
     }
 
     if (LAYOUT_RE.test(file)) {
@@ -155,14 +152,20 @@ export async function getPages(meta: Metadata) {
       continue
     }
 
+    if (page.is404) {
+      nf.set(page.fileName, page)
+      routes.push(page)
+      pages.set(fullFilePath, page)
+      continue
+    }
+
     if (!page.isInternal)
       pages.set(fullFilePath, page)
 
-
-    if (!page.isInternal && (page.is404 || (page.isDynamic && page.hasGetProps)))
+    if (!page.isInternal && page.isDynamic && page.hasGetProps)
       routes.push(page)
 
-    if (!page.isInternal && !page.is404) {
+    if (!page.isInternal) {
       if (page.isDynamic && page.hasGetStaticProps) {
         try {
           const _props = await page.mod.getStaticProps?.()
@@ -182,6 +185,7 @@ export async function getPages(meta: Metadata) {
 
   }
 
+  meta.nf = nf
   meta.layouts = layouts
   meta.pages = pages
   meta.spages = spages

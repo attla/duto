@@ -28,13 +28,16 @@ import { _duto, _root } from './utils'
 const VIRTUAL_ID = ':duto'
 const RESOLVED_ID = '\0'+ VIRTUAL_ID
 
-export const config = (opts: UserConfig) => {
+export const config = (opts: UserConfig & PluginOptions) => {
+  if (!opts.root) opts.root = _root
+  if (!opts.pagesDir) opts.pagesDir = 'pages',
+
   opts.logLevel = 'silent'
   opts.plugins = [
     ...(opts.plugins || []),
     preact(),
     tailwind(),
-    plugin(),
+    plugin(opts),
   ]
 
   return defineConfig(opts)
@@ -51,7 +54,7 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
   // let server: ViteDevServer
   let config: ResolvedConfig
   const {
-    rootDir = _root, // process.env.npm_config_local_prefix || process.env.PWD || process.cwd() || __dirname,
+    root = _root, // process.env.npm_config_local_prefix || process.env.PWD || process.cwd() || __dirname,
     pagesDir = 'pages',
   } = options
 
@@ -99,24 +102,24 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
         return opts
       },
 
-      configurePreviewServer(server: PreviewServer) {
-        const distDir = join(server.config.root, 'dist')
+      // configurePreviewServer(server: PreviewServer) {
+      //   const distDir = join(server.config.root, 'dist')
 
-        server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: (err?: any) => void) => {
-          if (req.url && !existsSync(join(distDir, req.url.split('?')[0]))) {
-            const notFound = join(distDir, '404.html')
+      //   server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: (err?: any) => void) => {
+      //     if (req.url && !existsSync(join(distDir, req.url.split('?')[0]))) {
+      //       const notFound = join(distDir, '404.html')
 
-            if (existsSync(notFound)) {
-              res.statusCode = 404
-              res.setHeader('Content-Type', 'text/html')
-                .end(readFileSync(notFound, 'utf-8'))
-              return
-            }
-          }
+      //       if (existsSync(notFound)) {
+      //         res.statusCode = 404
+      //         res.setHeader('Content-Type', 'text/html')
+      //           .end(readFileSync(notFound, 'utf-8'))
+      //         return
+      //       }
+      //     }
 
-          next()
-        })
-      },
+      //     next()
+      //   })
+      // },
 
     },
 
@@ -130,7 +133,8 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
       // },
 
       async config(conf: UserConfig, env: ConfigEnv) {
-        metadata = await getMetadata(rootDir, pagesDir)
+        // if (!metadata)
+          metadata = await getMetadata(root, pagesDir)
 
         // console.log(metadata.map)
         // console.log(metadata.violations)
@@ -194,7 +198,7 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             'tailwind.css',
             'tailwindcss.css',
             'styles/tailwind.css',
-            'style/tailwindcss.css',
+            'styles/tailwindcss.css',
           ]) {
             const path = join(config.root, f)
             if (existsSync(path)) {
@@ -214,12 +218,13 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
           return path
         }
 
-        // console.log(id, VIRTUAL_ID, RESOLVED_ID)
+        if (id.endsWith('/hmr') && global.__hmr)
+          return join(_duto, id.replace(VIRTUAL_ID, '') + '.ts')
+
         return id.replace(VIRTUAL_ID, RESOLVED_ID)
       },
 
       async load(id) {
-        // if (id !== RESOLVED_ID) return
         if (!id.startsWith(RESOLVED_ID)) return
 
         if (id.endsWith('/i18n'))
