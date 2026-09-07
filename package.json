@@ -1,7 +1,7 @@
 {
   "name": "duto",
   "description": "All-in-one serverless framework for web artisans",
-  "version": "0.260809.0",
+  "version": "0.260906.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.d.ts",

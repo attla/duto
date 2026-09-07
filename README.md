@@ -3,11 +3,23 @@
 > ⚠️ Duto is under ALFA development — expect updates, rough edges, and occasional breack changes.
 <br/>
 
-This framework is fully geared towards the serverless world, specifically for static pages.
+This framework is fully geared towards the serverless world.
 
-- 💡 SSG
-- ⚡️ Dynamic static routes
-- 📦 Optimized Build
+Server features:
+ - Instant Server Start
+ - Fast Cold Start
+ - Optimized Build
+
+Pages features:
+ - Static pages `/blog.tsx` `getStaticProps()`
+ - Prerendered dynamic pages `/blog/[slug].tsx` `getStaticProps()`
+ - Dynamic pages on client-side `/blog/[slug].tsx` `getProps()`
+ - Not found page on client-side `/blog/not-found.tsx`
+ - Efficient route hierarchy `/not-found.tsx`
+ - Catch-all page whitout SSR! `/blog/[...slug].tsx`
+ - Optional catch-all routes whitout SSR! `/blog/[[...slug]].tsx`
+ - Simple internationalization (i18n) integration `tˋfeaturesˋ`
+ - No vendor lock-in! `duto deploy`
 
 [Read the Docs to Learn More](https://github.com/attla/duto/blob/main/DOCS.md)
 
@@ -15,9 +27,7 @@ This framework is fully geared towards the serverless world, specifically for st
 
 | Package | Version | Description |
 | -: | :- | :- |
-| [rajt](https://github.com/attla/rajt) | [![rajt version](https://img.shields.io/npm/v/rajt.svg?label=%20)](https://npm.im/rajt) | 🧱 The core of Rajt serverless framework. |
-| [create-rajt](https://github.com/attla/create-rajt) | [![create-rajt version](https://img.shields.io/npm/v/create-rajt.svg?label=%20)](https://npm.im/create-rajt) | 📁 CLI tool for create new Rajt projects, from starter templates. |
-| [forj](https://github.com/attla/forj) | [![forj version](https://img.shields.io/npm/v/forj.svg?label=%20)](https://npm.im/forj) | 🗂️ Just another query builder in typescript |
+| [forj](https://github.com/attla/forj) | [![forj version](https://img.shields.io/npm/v/forj.svg?label=%20)](https://npm.im/forj) | 🗂️ Fast and ightweight query builder in typescript |
 | [t0n](https://github.com/attla/t0n) | [![t0n version](https://img.shields.io/npm/v/t0n.svg?label=%20)](https://npm.im/t0n) | 🧰 Collection of elegant typescript resources for web artisans. |
 | [cripta](https://github.com/attla/cripta) | [![cripta version](https://img.shields.io/npm/v/cripta.svg?label=%20)](https://npm.im/cripta) | 🧛 A layer of encryption a little too judicious. |
 
