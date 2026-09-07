@@ -9,7 +9,7 @@ import tailwind from '@tailwindcss/vite'
 
 import { EXT_RE } from './constants'
 import { setAsset, setChunk, setEntry } from './assets'
-import { renderPage } from './'
+import { renderPage } from '.'
 import { removeExports, resolveImport } from './ast'
 import { getMetadata } from './meta'
 

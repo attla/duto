@@ -1,12 +1,32 @@
 /// <reference types='bun-types' />
 /// <reference types='node' />
 
-export {}
+// export { }
+
+import * as Duto from './'
 
 declare global {
   // Duto
   var __st: number
   var __hmr: boolean
+
+  type Req = Duto.Req
+  type Res = Duto.Res
+  type $v = Duto.$v
+  type IRequest = Duto.IRequest
+  type IResponse = Duto.IResponse
+  type IValidator = Duto.IValidator
+
+  type Context = Duto.Context
+  type Next = Duto.Next
+
+  type Abilities = Duto.Abilities
+  type Roles = Duto.Roles
+
+  type EnumStatic = Duto.EnumStatic
+  type EnumValue = Duto.EnumValue
+  type EnumType = Duto.EnumType
+
 
   // Bun:test
   var test: typeof import('bun:test').test

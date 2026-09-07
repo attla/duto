@@ -26,12 +26,12 @@
     "rootDir": "./",
     "paths": {
       "~/*": ["./src/cli/*"],
-      "@/*": ["./src/compiler/*"],
-      "#/*": ["./src/client/*"],
-      "$/*": ["./src/*"],
+      "#/*": ["./src/pages/*"],
+      "$/*": ["./src/server/*"],
+      "@/*": ["./src/*"],
       "!/*": ["./*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "global.d.ts"],
-  "exclude": ["node_modules", "dist", ".rajt", ".duto"]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist", ".duto"]
 }

@@ -23,4 +23,4 @@ This framework is fully geared towards the serverless world, specifically for st
 
 ## License
 
-This package is licensed under the [MIT license](https://github.com/attla/duto/blob/main/LICENSE) © [Zunq](https://zunq.com)
+This package is licensed under the [MIT license](https://github.com/attla/duto/blob/main/LICENSE) © [HUB](https://hub.bi)
