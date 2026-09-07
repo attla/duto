@@ -3,12 +3,7 @@
 > ⚠️ Duto is under ALFA development — expect updates, rough edges, and occasional breack changes.
 <br/>
 
-This framework is fully geared towards the serverless world.
-
-Server features:
- - Instant Server Start
- - Fast Cold Start
- - Optimized Build
+Duto is minimalist framework, focused on client-side pages and serverless APIs.
 
 Pages features:
  - Static pages `/blog.tsx` `getStaticProps()`
@@ -20,6 +15,11 @@ Pages features:
  - Optional catch-all routes whitout SSR! `/blog/[[...slug]].tsx`
  - Simple internationalization (i18n) integration `tˋfeaturesˋ`
  - No vendor lock-in! `duto deploy`
+
+Server features:
+ - Instant Server Start
+ - Fast Cold Start
+ - Optimized Build
 
 [Read the Docs to Learn More](https://github.com/attla/duto/blob/main/DOCS.md)
 
