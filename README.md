@@ -27,7 +27,7 @@ Pages features:
 
 | Package | Version | Description |
 | -: | :- | :- |
-| [forj](https://github.com/attla/forj) | [![forj version](https://img.shields.io/npm/v/forj.svg?label=%20)](https://npm.im/forj) | 🗂️ Fast and ightweight query builder in typescript |
+| [forj](https://github.com/attla/forj) | [![forj version](https://img.shields.io/npm/v/forj.svg?label=%20)](https://npm.im/forj) | 🗂️ Fast and lightweight query builder in typescript |
 | [t0n](https://github.com/attla/t0n) | [![t0n version](https://img.shields.io/npm/v/t0n.svg?label=%20)](https://npm.im/t0n) | 🧰 Collection of elegant typescript resources for web artisans. |
 | [cripta](https://github.com/attla/cripta) | [![cripta version](https://img.shields.io/npm/v/cripta.svg?label=%20)](https://npm.im/cripta) | 🧛 A layer of encryption a little too judicious. |
 
