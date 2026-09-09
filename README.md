@@ -1,5 +1,5 @@
 <h1 align="left">
-  🛢 Duto
+  🛢 Duto &nbsp;
   <a href="https://npmjs.com/package/duto"><img  src="https://img.shields.io/npm/v/duto.svg" alt="npm package"></a>
   <br/>
   <a href="https://pr.new/attla/duto"><img align="right" src="https://developer.stackblitz.com/img/start_pr_dark_small.svg" alt="Start new PR in StackBlitz Codeflow"></a>
