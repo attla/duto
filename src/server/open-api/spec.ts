@@ -91,6 +91,13 @@ export async function generateOpenAPIClient(app: Hono, opts?: any) {
       // onLoaded: () => document?.querySelectorAll('[href="https://www.scalar.com"]')?.forEach(el => el.remove()),
       // favicon: 'https://example.com/favicon.png',
       // hideDownloadButton: true,
+      defaultHttpClient: {
+        targetKey: 'shell',
+        clientKey: 'curl',
+      },
+      hiddenClients: [
+        'c', 'clojure', 'csharp', 'dart', 'fsharp', 'go', 'http', 'java', 'julia', 'kotlin', 'node', 'objc', 'ocaml', 'php', 'python', 'powershell', 'r', 'ruby', 'rust', 'swift'
+      ],
     })
   )
 

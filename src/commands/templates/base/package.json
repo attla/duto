@@ -1,0 +1,25 @@
+{
+  "name": "$NAME",
+  "version": "0.0.0",
+  "private": true,
+  "main": ".duto/index.js",
+  "type": "module",
+  "dependencies": {
+    "cripta": "0.x",
+    "t0n": "0.x"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "bun-types": "catalog:",
+    "duto": "workspace:*",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  },
+  "duto": {
+    "type": "server",
+    "platform": "workerd",
+    "dev": {
+      "port": 3000
+    }
+  }
+}

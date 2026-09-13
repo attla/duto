@@ -20,11 +20,10 @@ import { Envir } from 't0n'
 import { version } from '!/package.json'
 import { _root, _duto } from './utils'
 
-let commands = {
-  // new:
-  // upgrade:
-}
+const cmd = (c: string) => join(import.meta.dirname, 'commands', c)
+
 let pkg
+let commands = {}
 try {
   pkg = await import(join(_root, 'package.json'))
   if (!pkg || !pkg.duto || !pkg?.duto?.type || !['pages', 'server'].includes(pkg.duto.type))
@@ -38,5 +37,9 @@ cli({
   name: 'duto',
   description: 'Duto',
   version,
-  commands,
+  commands: {
+    new: cmd('new'),
+    upgrade: cmd('upgrade'),
+    ...commands,
+  },
 })

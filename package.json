@@ -25,6 +25,10 @@
     "./length": "./src/server/utils/length.ts"
   },
   "dependencies": {
+    "@inquirer/confirm": "^5.1.8",
+    "@inquirer/input": "^4.1.8",
+    "@inquirer/select": "^4.1.0",
+    "nanospinner": "^1.2.2",
     "@hono/node-server": "catalog:",
     "@hono/standard-validator": "catalog:",
     "@hono/zod-validator": "catalog:",
