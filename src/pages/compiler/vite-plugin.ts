@@ -1,6 +1,6 @@
 // REF: https://github.com/tailwindlabs/tailwindcss/blob/main/packages/%40tailwindcss-vite/src/index.ts
 
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig } from 'vite'
 
@@ -13,7 +13,6 @@ import { renderPage } from '.'
 import { removeExports, resolveImport } from './ast'
 import { getMetadata } from './meta'
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import type {
   // Plugin,
   UserConfig, ConfigEnv, ResolvedConfig,
@@ -23,12 +22,12 @@ import type {
   PluginOption,
 } from 'vite'
 import type { Metadata, PluginOptions } from './types'
-import { _duto, _root } from './utils'
+import { _pages, _root } from '@/utils'
 
 const VIRTUAL_ID = ':duto'
 const RESOLVED_ID = '\0'+ VIRTUAL_ID
 
-export const config = (opts: UserConfig & PluginOptions) => {
+export const config = (opts: UserConfig & PluginOptions) => { // @ts-ignore
   if (!opts.root) opts.root = _root
   if (!opts.pagesDir) opts.pagesDir = 'pages',
 
@@ -57,7 +56,6 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
     root = _root, // process.env.npm_config_local_prefix || process.env.PWD || process.cwd() || __dirname,
     pagesDir = 'pages',
   } = options
-
   // let metadata: Metadata
 
   const PAGES_RE = new RegExp(`\/${pagesDir}\/.*\.(tsx?|jsx?)$`, 'i')
@@ -101,26 +99,6 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
 
         return opts
       },
-
-      // configurePreviewServer(server: PreviewServer) {
-      //   const distDir = join(server.config.root, 'dist')
-
-      //   server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: (err?: any) => void) => {
-      //     if (req.url && !existsSync(join(distDir, req.url.split('?')[0]))) {
-      //       const notFound = join(distDir, '404.html')
-
-      //       if (existsSync(notFound)) {
-      //         res.statusCode = 404
-      //         res.setHeader('Content-Type', 'text/html')
-      //           .end(readFileSync(notFound, 'utf-8'))
-      //         return
-      //       }
-      //     }
-
-      //     next()
-      //   })
-      // },
-
     },
 
     {
@@ -133,8 +111,7 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
       // },
 
       async config(conf: UserConfig, env: ConfigEnv) {
-        // if (!metadata)
-          metadata = await getMetadata(root, pagesDir)
+        metadata = await getMetadata(root as string, pagesDir)
 
         // console.log(metadata.map)
         // console.log(metadata.violations)
@@ -146,8 +123,8 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
           conf.build.manifest = false
           conf.build.modulePreload = { polyfill: false }
 
-          conf.build.minify = true
-          conf.build.cssMinify = true //////
+          conf.build.minify = metadata.minify
+          conf.build.cssMinify = metadata.minify
 
           conf.build.rolldownOptions = conf.build.rolldownOptions || {}
           conf.build.rolldownOptions.preserveEntrySignatures = 'exports-only' ///
@@ -157,20 +134,22 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             ...Object.keys(metadata.pages),
             ...metadata.assets,
           ]
+
+          const filePrefix = metadata.minify ? '' : '[name].'
           // conf.build.rolldownOptions.input = ':duto/client/app.tsx'
           conf.build.rolldownOptions.output = {
             hoistTransitiveImports: false,
             format: 'esm',
-            minifyInternalExports: true,
+            minifyInternalExports: metadata.minify,
 
             // manualChunks: {
             //   vendor: ['preact', '@preact/signals', 'wouter-preact'],
             // },
             // preserveModules: true,
             preserveModulesRoot: '/',
-            assetFileNames: '[hash][extname]',
-            entryFileNames: '[hash].js',
-            chunkFileNames: '[hash].js',
+            assetFileNames: filePrefix +'[hash][extname]',
+            entryFileNames: filePrefix +'[hash].js',
+            chunkFileNames: filePrefix +'[hash].js',
 
             // chunkFileNames: '[name].[hash].js',
             // entryFileNames: 'assets/[name].js',
@@ -213,13 +192,13 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
         if (!id.startsWith(VIRTUAL_ID)) return null
 
         if (EXT_RE.test(id) && id.includes('/')) {
-          const path = join(_duto, id.replace(VIRTUAL_ID, ''))
+          const path = join(_pages, id.replace(VIRTUAL_ID, ''))
           setEntry(id, path)
           return path
         }
 
-        if (id.endsWith('/hmr') && global.__hmr)
-          return join(_duto, id.replace(VIRTUAL_ID, '') + '.ts')
+        if (id.endsWith('/hmr') && metadata.hmr)
+          return join(_pages, 'client', id.replace(VIRTUAL_ID, '') + '.ts')
 
         return id.replace(VIRTUAL_ID, RESOLVED_ID)
       },
@@ -245,7 +224,7 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             continue
           }
 
-          if (file.type === 'asset' && file?.originalFileName?.endsWith('duto/client/app.tsx'))
+          if (file.type === 'asset' && file?.originalFileName?.endsWith('duto/pages/client/app.tsx'))
             file.source += 'd-b,d-p,i-d,i-s,i-i{display:contents}'
 
           if (file.type === 'asset' && file.fileName.endsWith('.css')) {
@@ -296,10 +275,10 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
       },
 
       async closeBundle() {
-        for (const [_filePath, page] of metadata.pages) {
+        for (const [_filePath, page] of metadata.pages) // {
           await renderPage(metadata, config, page)
           // const mod = await server.ssrLoadModule(_filePath)
-        }
+        // }
 
         rmSync(join(metadata.root, 'tmp'), {recursive: true, force: true})
         // await server.close()
@@ -311,12 +290,8 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
         // console.log(this.getModuleInfo(id))
 
         const stripped = removeExports(id, code, stripTarget)
-        if (!stripped || stripped === code) return null
 
-        return {
-          code: stripped,
-          map: null, // source maps omitted for brevity, add if needed
-        }
+        return (!stripped || stripped === code) ? null : { code: stripped, map: null }
       },
 
     },

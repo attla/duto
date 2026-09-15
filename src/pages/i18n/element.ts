@@ -1,4 +1,4 @@
-import { local } from '#/storage'
+import { local } from '#/client/storage'
 import { t, _prefixed } from './client'
 
 export default class EI18n extends HTMLElement {

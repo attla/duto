@@ -3,7 +3,7 @@ import { render, h } from 'preact'
 // import { useLocation, Switch, Route, Router } from 'wouter-preact'
 // import { matchRoute } from 'wouter-preact'
 // import type { Routes, IRoute } from '../types'
-import type { Page, GetProps, IRoute } from '@/types'
+import type { Page, GetProps, IRoute } from '#/compiler/types'
 // import { updatePickers } from '../i18n/client'
 
 // type Route = [string, Page, IRoute['params'], GetProps]

@@ -2,9 +2,10 @@ import { command, watch, killProcess } from 't0n/cli'
 import { dim } from 't0n/color'
 import { error, log, rn } from 't0n/log'
 import { withPort } from 't0n/port'
-import { getMetadata } from '@/meta'
+import { getMetadata } from '#/compiler/meta'
 import { _root } from '@/utils'
-import { getConfig, preview, reload } from '~/utils'
+import { getConfig, preview, reload } from '../utils'
+import { getEnv, setEnv } from 't0n'
 
 export const args = {
   port: {
@@ -28,8 +29,11 @@ export default command({
 	args,
   async run({ args }) {
     const config = await getConfig()
-		const desiredPort = args.port ? Number(args.port) : (config?.preview?.port ? Number(config.preview.port) : 3000)
-    const host = args.host ? String(args.host) : (config?.preview?.host ? String(config.preview.host) : 'localhost')
+    const duto = getEnv('duto', {})
+    const desiredPort = Number(args.port || duto?.dev?.port || 3000)
+    const host = String(args.host || duto?.dev?.host || 'localhost')
+    // const desiredPort = args.port ? Number(args.port) : (config?.preview?.port ? Number(config.preview.port) : 3000)
+    // const host = args.host ? String(args.host) : (config?.preview?.host ? String(config.preview.host) : 'localhost')
 
     let buildProcess: Bun.Subprocess | null = null
 
@@ -48,6 +52,9 @@ export default command({
     }
 
     withPort(desiredPort, async (port) => {
+      setEnv('duto.dev.port', port)
+      setEnv('duto.dev.host', host)
+
       const ignore = [
         /(^|[\/\\])\.(duto|git|cache|vscode|idea|next|nuxt|nyc_output)([\/\\]|$)/,
         /(^|[\/\\])(node_modules|tmp|dist|build|out|coverage)([\/\\]|$)/,

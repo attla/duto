@@ -1,5 +1,5 @@
 // @ts-ignore
-import ':duto/client/hmr'
+import ':duto/hmr'
 
 import { render, hydrate, h } from 'preact'
 import { Switch, Route, Router } from 'wouter-preact'

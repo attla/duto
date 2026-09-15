@@ -7,7 +7,7 @@
 import { dirname, extname, join } from 'node:path'
 import { readdirSync } from 'node:fs'
 
-import { IMPORT, JSJSON, newID } from 't0n'
+import { getEnv, IMPORT, JSJSON, newID } from 't0n'
 
 import { getAliases } from './aliases'
 import { EXT_RE, DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE, NF_NAMES } from './constants'
@@ -257,7 +257,7 @@ export async function getLayouts(meta: Metadata, path: string) {
 }
 
 export async function getMetadata(root: string, dir: string) {
-  const meta = { root, dir } as Metadata
+  const meta = { root, dir, ...getEnv('duto', {}) } as Metadata
   meta.summary = new Map<string, SummaryMetadata>()
 
   meta.i18n = await getI18n(meta)

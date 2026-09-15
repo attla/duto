@@ -12,10 +12,9 @@ import { STATUS_CODES } from 'node:http'
 import $ from './app'
 import _response from './response'
 import _validator from './validator'
-import { _root, _duto } from '@/utils'
-import { getLastCommitHash, ensureDir, nextId } from './utils'
+import { _root, _server } from '@/utils'
+import { getLastCommitHash, ensureDir, nextId, verbAlias } from './utils'
 import { generateOpenAPI, generateOpenAPIClient, openAPIConfig } from './open-api/spec'
-import { verbAlias } from './http'
 import { highlightedMethod, highlightedURI } from './cli/utils'
 
 import type { Routes, Rule, StandardSchemaV1 } from './types'
@@ -406,7 +405,7 @@ export async function cacheRoutes() {
   const configs = await getConfigs()
   const middlewares = await getMiddlewares()
   if (isDev()) {
-    const _file = join(_duto, 'server', 'middlewares', 'logger.ts')
+    const _file = join(_server, 'middlewares', 'logger.ts')
     const _mod = await IMPORT(_file) // @ts-ignore
     middlewares.unshift({
       path: _mod?.path || '*',
@@ -447,8 +446,8 @@ export async function cacheRoutes() {
   const _dutoDir = await dependencyPath('duto')
 
   await write(iPath, `// AUTO-GENERATED FILE - DO NOT EDIT
-${env?.length ? `import { Envir } from '${await dependencyPath('t0n')}/src/envir'\nEnvir.add(${JSJSON(Object.fromEntries(env))})` : ''}
-${Object.entries(configs)?.length ? `import Config from '${_dutoDir}/src/server/config'\nConfig.add(${JSJSON(configs)})` : ''}
+${env?.length ? `import { addEnv } from '${await dependencyPath('t0n')}/src/env'\naddEnv(${JSJSON(Object.fromEntries(env))})` : ''}
+${Object.entries(configs)?.length ? `import { addConfig } from '${_dutoDir}/src/server/config'\naddConfig(${JSJSON(configs)})` : ''}
 
 ${middlewares.map(r => `import { handle as MW${r.name} } from '../${normalizeImportPath(r.file)}'`).join('\n')}
 export const middlewares = [[${middlewares.map(mw => [

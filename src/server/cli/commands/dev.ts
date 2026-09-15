@@ -16,7 +16,7 @@ import {
 } from '../utils'
 import { _root } from '@/utils'
 import { withPort } from 't0n/port'
-import { Envir } from 't0n'
+import { getEnv } from 't0n'
 import { $dev, setEnv } from '$/utils/environment'
 
 export default command({
@@ -50,13 +50,15 @@ export default command({
 	},
   async run({ args }) {
     setEnv($dev)
-    const duto = Envir.get('duto', {})
+    const duto = getEnv('duto', {})
 		const platform = normalizePlatform(args.p || args.platform || duto.platform || args._[0] || 'node')
 		if (!platform)
 			return platformError()
 
-		const desiredPort = args.port ? Number(args.port) : duto?.dev?.port || 3000
-		const host = args.host ? String(args.host) : duto?.dev?.host || 'localhost'
+		const desiredPort = Number(args.port || duto?.dev?.port || 3000)
+		const host = String(args.host || duto?.dev?.host || 'localhost')
+		// const desiredPort = args.port ? Number(args.port) : duto?.dev?.port || 3000
+		// const host = args.host ? String(args.host) : duto?.dev?.host || 'localhost'
 
 		let isBuilding = false
 		const startApp = async (start: Function, stop: Function|undefined = undefined, building: boolean = true) => {

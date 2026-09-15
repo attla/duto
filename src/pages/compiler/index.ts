@@ -15,7 +15,6 @@ import type { IRoute, Metadata, RouteParams, StaticProps, SummaryMetadata } from
 
 // import i18n from '../client/i18n'
 import { setLocale } from '../i18n/client'
-import { log, substep } from 't0n/log'
 
 
 
@@ -162,13 +161,12 @@ export async function renderPage(
       config.build.outDir,
       pathname +'.html'
     )
-    const outHTML = minify.minify(
+    const outHTML = meta.minify ? minify.minify(
       Buffer.from(html),
       {}
       // options != null ? options : {},
-    )
+    ) : html
     await mkdir(dirname(outFile), {recursive: true})
-    // await writeFile(outFile, outHTML, 'utf-8')
     await Bun.write(outFile, outHTML)
 
     const key = '/'+ pathname

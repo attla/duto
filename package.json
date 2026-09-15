@@ -1,7 +1,7 @@
 {
   "name": "duto",
   "description": "All-in-one serverless framework for web artisans",
-  "version": "0.260906.0",
+  "version": "0.260915.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.d.ts",
@@ -42,7 +42,6 @@
     "cripta": "0.x",
     "dotenv": "catalog:",
     "esbuild": "catalog:",
-    "filesize": "catalog:",
     "forj": "0.x",
     "hono": "catalog:",
     "hono-openapi": "catalog:",
@@ -54,6 +53,7 @@
     "preact-render-to-string": "^6.6.6",
     "quansync": "catalog:",
     "t0n": "0.x",
+    "vite": "catalog:",
     "wouter-preact": "catalog:",
     "wrangler": "catalog:",
     "zod": "catalog:",
@@ -61,7 +61,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@types/node": "catalog:",
+    "@minify-html/node": "^0.18.1",
+    "@preact/preset-vite": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "bun-types": "catalog:",
     "typescript": "catalog:"
   },

@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { IMPORT, JSJSON } from 't0n'
 
-import type { Metadata, I18nMetadata } from '@/types'
+import type { Metadata, I18nMetadata } from '#/compiler/types'
 import { existsSync } from 'node:fs'
 
 export default async function getI18n(meta: Metadata) {

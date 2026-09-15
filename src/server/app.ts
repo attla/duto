@@ -1,18 +1,16 @@
 import { Hono } from 'hono'
-import { Envir } from 't0n'
 import type {
   Env, Context, Next,
   HTTPResponseError,
   ServerOptions, Route
 } from './types'
-import request, { GET_REQUEST } from './request'
+import request from './request'
 import response from './response'
 import { isDev } from './utils/environment'
-import { getVerb } from './http'
+import { getVerb } from './utils'
 import { registerMiddleware, resolveHandle, resolveMw } from './handle'
 
-const NFHandler = () => response.notFound()
-const EHandler = async (e: Error | HTTPResponseError) => {
+async function EHandler(e: Error | HTTPResponseError) {
   console.error(e)
 
   switch (true) {
@@ -59,7 +57,7 @@ const EHandler = async (e: Error | HTTPResponseError) => {
   // stack: isDev (? e.stack : undefined
 }
 
-export const createApp = <E extends Env>(options?: ServerOptions<E>) => {
+export default function createApp<E extends Env>(options?: ServerOptions<E>) {
   // const root = options?.root ?? '/'
   const app = options?.app ?? new Hono<E>()
 
@@ -76,8 +74,7 @@ export const createApp = <E extends Env>(options?: ServerOptions<E>) => {
 
   // @ts-ignore
   app.onError(options?.onError || EHandler)
-  // @ts-ignore
-  app.notFound(options?.notFound || NFHandler)
+  app.notFound(options?.notFound || response.notFound)
 
   if (options?.init) options.init(app)
 
@@ -92,5 +89,3 @@ export const createApp = <E extends Env>(options?: ServerOptions<E>) => {
 
   return app
 }
-
-export default createApp

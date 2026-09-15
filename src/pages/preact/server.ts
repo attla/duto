@@ -8,7 +8,7 @@ import { getContext, incrementIslandId } from './context'
 import { restoreSignalsOnProps, serializeSignals } from './signals'
 import StaticHtml from './static-html'
 import type { IslandAttrs } from './types'
-import type { IslandMeta } from '@/types'
+import type { IslandMeta } from '#/compiler/types'
 // import type { AstroPreactAttrs, RendererContext } from './types.js'
 // import { createFilter } from '@astrojs/internal-helpers/create-filter'
 

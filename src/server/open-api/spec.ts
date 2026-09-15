@@ -1,7 +1,7 @@
 import { STATUS_CODES } from 'node:http'
 import { generateSpecs, resolver } from 'hono-openapi'
 import { array, object, string } from 'zod/mini'
-import { Envir } from 't0n'
+import { getEnv } from 't0n'
 import { Scalar } from '@scalar/hono-api-reference'
 import { minify } from '@minify-html/node'
 import type { Hono } from '$/types'
@@ -14,8 +14,8 @@ export function openAPIConfig(opts: any) {
     agent = false,
     name = '',
     title = '',
-    version = Envir.get('APP_VERSION') || Envir.get('VERSION_HASH') || '1.0.0',
-    description = Envir.get('APP_DESCRIPTION', ''),
+    version = getEnv('APP_VERSION') || getEnv('VERSION_HASH') || '1.0.0',
+    description = getEnv('APP_DESCRIPTION', ''),
     auth = {},
     ...docs
   } = opts?.docs ?? {}
@@ -25,7 +25,7 @@ export function openAPIConfig(opts: any) {
     path,
     auth,
     agent: !!agent,
-    name: name || title || Envir.get('APP_NAME', 'API Docs'),
+    name: name || title || getEnv('APP_NAME', 'API Docs'),
     version,
     desc: description,
     ...docs,

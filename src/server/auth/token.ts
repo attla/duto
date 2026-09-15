@@ -1,5 +1,5 @@
-import { Envir, parseUA } from 't0n'
-import { sha256, toString, type Config } from 'cripta'
+import { bytesToHex, getEnv, parseUA } from 't0n'
+import { sha256, type Config } from 'cripta'
 import { config, create, parse } from 'cripta/token'
 import type { IRequest } from '$/types'
 
@@ -76,12 +76,12 @@ export class Token {
     if (this.#cripta)
       return this.#cripta
 
-    return this.#cripta = await config({ key: Envir.get<string>('KEY') })
+    return this.#cripta = await config({ key: getEnv('KEY') })
   }
 
   static async parse(req: IRequest, token: string) {
     const host = this.host(req)
-    const serveHost = Envir.get('FLOW_SERVER', host) as string
+    const serveHost = getEnv('FLOW_SERVER', host) as string
 
     return parse(await this.cripta(), token, {
       iss: serveHost,
@@ -130,7 +130,7 @@ export class Token {
   static async fingerprint(req: IRequest) {
     const ua = parseUA(req.header('user-agent'))
 
-    const id = toString(await sha256(
+    const id = bytesToHex(await sha256(
       // (req.header('accept-language') || '')
       this.ip(req)
       + ua.browser.name + ua.browser.version.split('.')[0]

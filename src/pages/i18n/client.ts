@@ -1,5 +1,5 @@
 import { h, type JSX } from 'preact'
-import { local } from '#/storage'
+import { local } from '#/client/storage'
 import { navigate } from '..'
 
 const accepted = (lang: string | undefined, locales: string[] = [], fallback: string) => lang && locales.includes(lang) ? lang : fallback

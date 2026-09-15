@@ -16,7 +16,7 @@ global.__st = performance.now()
 
 import { join } from 'pathe'
 import { cli } from 't0n/cli'
-import { Envir } from 't0n'
+import { setEnv } from 't0n'
 import { version } from '!/package.json'
 import { _root, _duto } from './utils'
 
@@ -29,7 +29,7 @@ try {
   if (!pkg || !pkg.duto || !pkg?.duto?.type || !['pages', 'server'].includes(pkg.duto.type))
     exit('Error: invalid app type.')
 
-  Envir.set('duto', pkg.duto)
+  setEnv('duto', pkg.duto)
   commands = (await import(join(_duto, pkg.duto.type, 'cli')))?.default
 } catch {}
 

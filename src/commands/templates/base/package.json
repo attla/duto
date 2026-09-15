@@ -9,7 +9,6 @@
     "t0n": "0.x"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
     "bun-types": "catalog:",
     "duto": "workspace:*",
     "typescript": "catalog:",

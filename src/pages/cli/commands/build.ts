@@ -1,22 +1,29 @@
 import { build } from 'vite'
-import { filesize } from 'filesize'
+import { setEnv } from 't0n'
 import { command } from 't0n/cli'
 import { dim, underline } from 't0n/color'
 import { wait, error, rn, event } from 't0n/log'
-import { meta } from '@/vite-plugin'
-import { getConfig } from '~/utils'
-import type { SummaryMetadata } from '@/types'
+import { meta } from '#/compiler/vite-plugin'
+import type { SummaryMetadata } from '#/compiler/types'
+import { getConfig } from '../utils'
+import { filesize } from '@/utils'
 
 export default command({
 	meta: {
 		name: 'build',
 		description: '🗂️  Perform the build for production\n',
 	},
-	args: {
+  args: {
+		minify: {
+			description: 'Minify the result',
+			type: 'boolean',
+			default: true,
+		},
 	},
   async run({ args }) {
-    global.__hmr = !!args?.hmr
     wait('Building..')
+    setEnv('duto.hmr', !!args?.hmr)
+    setEnv('duto.minify', args.minify ?? true)
 
 		try {
       await build(await getConfig())
@@ -65,7 +72,6 @@ export default command({
       event(`Builded successfully${st ? dim(` in ${st} ms`) : ''}`)
 		} catch (e: any) {
 			error(e)
-			// error('Build failed:', e?.message || e)
 			process.exit(0)
 		} finally {
 			rn()

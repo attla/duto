@@ -4,7 +4,6 @@ import { mkdirSync, existsSync, statSync, readdirSync, rmSync, unlinkSync, copyF
 import { stat } from 'node:fs/promises'
 import { basename, dirname, join } from 'pathe'
 import { createHash, createHmac } from 'node:crypto'
-import { filesize } from 'filesize'
 
 import { findWranglerConfig, parseWranglerConfig, WRANGLER_CONFIG_FILES } from 'localflare-core'
 import type { WranglerConfig, LocalflareManifest } from 'localflare-core'
@@ -13,7 +12,7 @@ import { gray, bold, italic, purple, yellow, red } from 't0n/color'
 import { substep, event, error, warn } from 't0n/log'
 
 import { cacheRoutes } from '$/routes'
-import { _duto, _root } from '@/utils'
+import { _root, _server, filesize } from '@/utils'
 
 import type { Platform } from './types'
 
@@ -137,17 +136,12 @@ export const build = async ({
   if (!silent) event('Routes cached')
 
   const result = await Bun.build({
-    entrypoints: [join(_duto, 'server', 'adapter', `${platform}.ts`)],
+    entrypoints: [join(_server, 'adapter', `${platform}.ts`)],
     outdir,
     format: 'esm',
     target: 'bun',
     conditions: isWorkerd ? ['worker', 'browser'] : [],
     minify: !!minify,
-    // minify: {
-    //   whitespace: true,
-    //   syntax: true,
-    //   identifiers: true,
-    // },
 
     treeShaking: true,
     legalComments: 'none',

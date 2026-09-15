@@ -1,4 +1,4 @@
-import { Envir } from 't0n'
+import { getEnv } from 't0n'
 import { command } from 't0n/cli'
 import { gray } from 't0n/color'
 import { wait, error, rn } from 't0n/log'
@@ -23,7 +23,7 @@ export default command({
 		},
 	},
 	async run({ args }) {
-    const platform = normalizePlatform(args.p || args.platform || Envir.get('duto.platform') || args._[0] || 'node')
+    const platform = normalizePlatform(args.p || args.platform || getEnv('duto.platform') || args._[0] || 'node')
 		if (!platform)
 			return platformError()
 

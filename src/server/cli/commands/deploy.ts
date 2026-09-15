@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process'
-import { Envir } from 't0n'
 import { command } from 't0n/cli'
 import { error } from 't0n/log'
 import { getRuntime } from 't0n/cli'
@@ -28,7 +27,7 @@ export default command({
 		},
 	},
 	async run({ args }) { // @ts-ignore
-		const platform = normalizePlatform(args.p || args.platform || args._[0] || Envir.get('duto.platform'))
+		const platform = normalizePlatform(args.p || args.platform || args._[0] || getEnv('duto.platform'))
 		if (!platform)
 			return platformError()
 

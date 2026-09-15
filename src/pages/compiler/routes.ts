@@ -1,5 +1,5 @@
 import { join } from 'pathe'
-import { _root } from './utils'
+import { _root } from '@/utils'
 import type { IRoute, Metadata } from './types'
 import { dirname } from 'node:path'
 import { NF_NAMES } from './constants'

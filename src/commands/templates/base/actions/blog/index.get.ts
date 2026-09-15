@@ -1,4 +1,4 @@
-import type { Req, Res, $v } from 'duto'
+import type { Req, Res } from 'duto'
 import { newID } from 't0n'
 
 export async function handle(req: Req, res: Res) {

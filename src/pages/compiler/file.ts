@@ -1,7 +1,7 @@
 import { extname, join } from 'node:path'
 import { existsSync } from 'node:fs'
 import { EXTENSIONS, FILE_EXTENSIONS } from './constants'
-import type { Metadata } from '@/types'
+import type { Metadata } from './types'
 
 const extensionCache = new Map<string, string | null>()
 export function resolveExtension(filePath: string): string | null {

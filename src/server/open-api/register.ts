@@ -1,6 +1,6 @@
 import { basicAuth } from 'hono/basic-auth'
 import response from '$/response'
-import Config from '$/config'
+import { getConfig } from '$/config'
 import type { Hono } from '$/types'
 
 export function registerOpenAPI(app: Hono, opts: any) {
@@ -24,6 +24,6 @@ export function registerOpenAPI(app: Hono, opts: any) {
     })
   }
 
-  app.get(opts.path, async () => response.html(Config.get('DUTO_OAC')))
-  app.get(opts.path +'/openapi', async () => response.raw(200, Config.get('DUTO_OAS'), 'application/json'))
+  app.get(opts.path, async () => response.html(getConfig('DUTO_OAC')))
+  app.get(opts.path +'/openapi', async () => response.raw(200, getConfig('DUTO_OAS'), 'application/json'))
 }

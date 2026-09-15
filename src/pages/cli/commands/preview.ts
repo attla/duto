@@ -2,10 +2,11 @@ import { command } from 't0n/cli'
 import { dim } from 't0n/color'
 import { error, log, rn } from 't0n/log'
 import { withPort } from 't0n/port'
-import { getMetadata } from '@/meta'
+import { getMetadata } from '#/compiler/meta'
 import { _root } from '@/utils'
 import { args } from './dev'
-import { getConfig, preview } from '~/utils'
+import { getConfig, preview } from '../utils'
+import { getEnv } from 't0n'
 
 export default command({
   meta: {
@@ -15,8 +16,9 @@ export default command({
 	args,
   async run({ args }) {
     const config = await getConfig()
-		const desiredPort = args.port ? Number(args.port) : (config?.preview?.port ? Number(config.preview.port) : 3000)
-    const host = args.host ? String(args.host) : (config?.preview?.host ? config.preview.host as string : 'localhost')
+    const duto = getEnv('duto', {})
+		const desiredPort = Number(args.port || duto?.dev?.port || 3000)
+		const host = String(args.host || duto?.dev?.host || 'localhost')
 
     withPort(desiredPort, async (port) => {
       try {

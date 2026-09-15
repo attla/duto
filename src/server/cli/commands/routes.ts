@@ -1,6 +1,5 @@
 import { command } from 't0n/cli'
 import { rn } from 't0n/log'
-import { _duto } from '@/utils'
 import { highlightedURI, highlightedMethod } from '../utils'
 import { getRoutes } from '$/routes'
 

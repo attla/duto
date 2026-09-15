@@ -1,4 +1,4 @@
-import { verbAlias } from '$/http'
+import { verbAlias } from '$/utils'
 import type { IRequest, Routes } from '$/types'
 import type { Roles, Abilities } from './types'
 

@@ -1,4 +1,5 @@
 // import type { ComponentType, FunctionComponent, VNode } from 'preact'
+import type { Platform } from '$/cli/types'
 import type { FunctionComponent, VNode } from 'preact'
 
 export type PluginOptions = {
@@ -41,6 +42,15 @@ export type SummaryMetadata = {
 export type Metadata = {
   root: string,
   dir: string,
+  type: 'pages' | 'server',
+  platform: Platform,
+  dev: {
+    host: string,
+    port: number,
+  },
+  hmr: boolean,
+  minify: boolean,
+
   aliases: Record<string, string>,
   map: Map<string, FileMetadata>,
   violations: Map<string, DepMetadata[]>,

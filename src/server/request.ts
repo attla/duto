@@ -1,7 +1,7 @@
 import { getCookie, getSignedCookie, setCookie, setSignedCookie, deleteCookie } from 'hono/cookie'
 import { HTTPException } from 'hono/http-exception'
 import { Authnz, Token } from './auth'
-import { Envir } from 't0n'
+import { addEnv } from 't0n'
 
 import type { Context } from 'hono'
 import { routePath, matchedRoutes } from 'hono/route'
@@ -10,21 +10,52 @@ import type { CookieOptions, CookiePrefixOptions } from 'hono/utils/cookie'
 import type { CustomHeader, RequestHeader } from 'hono/utils/headers'
 import type { BodyData, ParseBodyOptions } from 'hono/utils/body'
 
-const cookieWrapper = (c: Context) => ({
-  all: () => getCookie(c),
-  allSigned: (secret: string) => getSignedCookie(c, secret),
-  get: (name: string, prefixOptions?: CookiePrefixOptions) => prefixOptions ? getCookie(c, name, prefixOptions) : getCookie(c, name),
-  getSigned: (secret: string, name: string, prefixOptions?: CookiePrefixOptions) => prefixOptions ? getSignedCookie(c, secret, name, prefixOptions) : getSignedCookie(c, secret, name),
-  set: (name: string, value: string, opt?: CookieOptions) => setCookie(c, name, value, opt),
-  setSigned: (name: string, value: string, secret: string, opt?: CookieOptions) => setSignedCookie(c, name, value, secret, opt),
-  delete: (name: string, opt?: CookieOptions) => deleteCookie(c, name, opt)
-})
+// function cookieWrapper(c: Context) {
+//   return {
+//     all: () => getCookie(c),
+//     allSigned: (secret: string) => getSignedCookie(c, secret),
+//     get: (name: string, prefixOptions?: CookiePrefixOptions) => prefixOptions ? getCookie(c, name, prefixOptions) : getCookie(c, name),
+//     getSigned: (secret: string, name: string, prefixOptions?: CookiePrefixOptions) => prefixOptions ? getSignedCookie(c, secret, name, prefixOptions) : getSignedCookie(c, secret, name),
+//     set: (name: string, value: string, opt?: CookieOptions) => setCookie(c, name, value, opt),
+//     setSigned: (name: string, value: string, secret: string, opt?: CookieOptions) => setSignedCookie(c, name, value, secret, opt),
+//     delete: (name: string, opt?: CookieOptions) => deleteCookie(c, name, opt)
+//   }
+// }
+class $Cookie {
+  #c!: Context
+  constructor(c: Context) {
+    this.#c = c
+  }
+
+  all() {
+    return getCookie(this.#c)
+  }
+  allSigned(secret: string) {
+    return getSignedCookie(this.#c, secret)
+  }
+  get(name: string, prefixOptions?: CookiePrefixOptions) {
+    return prefixOptions ? getCookie(this.#c, name, prefixOptions) : getCookie(this.#c, name)
+  }
+  getSigned(secret: string, name: string, prefixOptions?: CookiePrefixOptions) {
+    return prefixOptions ? getSignedCookie(this.#c, secret, name, prefixOptions) : getSignedCookie(this.#c, secret, name)
+  }
+  set(name: string, value: string, opt?: CookieOptions) {
+    setCookie(this.#c, name, value, opt)
+  }
+  setSigned(name: string, value: string, secret: string, opt?: CookieOptions) {
+    setSignedCookie(this.#c, name, value, secret, opt)
+  }
+  delete(name: string, opt?: CookieOptions) {
+    deleteCookie(this.#c, name, opt)
+  }
+}
 
 export const GET_REQUEST: unique symbol = Symbol()
 
 export default class $Request {
   #c!: Context
-  #cookie: ReturnType<typeof cookieWrapper>
+  #cookie: $Cookie
+  // #cookie: ReturnType<typeof cookieWrapper>
   #u: Authnz<any> | null = null
 
   #host: string
@@ -34,7 +65,8 @@ export default class $Request {
 
   constructor(c: Context) {
     this.#c = c
-    this.#cookie = cookieWrapper(c)
+    this.#cookie = new $Cookie(c)
+    // this.#cookie = cookieWrapper(c)
 
     const url = new URL(c.req.raw.url)
     this.#host = url.protocol +'//'+ url.host
@@ -47,11 +79,11 @@ export default class $Request {
     const req = new $Request(c)
     await req.setAuth()
     c.set(GET_REQUEST as unknown as string, req)
-    if (c.env) Envir.add(c.env)
+    if (c.env) addEnv(c.env)
   }
 
   async setAuth() {
-    this.#u = Authnz.fromToken(Token.fromRequest(this))
+    this.#u = Authnz.fromToken(await Token.fromRequest(this))
   }
 
   get user() {
