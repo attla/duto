@@ -11,6 +11,7 @@ import select from '@inquirer/select'
 import { createSpinner } from 'nanospinner'
 import { exit } from 'node:process'
 
+const types = ['pages', 'server']
 const templates = [
   'aws',
   'workerd',
@@ -63,6 +64,11 @@ export default command({
       type: 'boolean',
       default: false,
     },
+    type: {
+      description: 'Project type',
+      type: 'enum',
+      options: types,
+    },
     template: {
 			alias: 't',
       description: 'Template to use',
@@ -71,48 +77,65 @@ export default command({
     },
   },
 	async run({ args }) { // @ts-ignore
-    const root = process.cwd() || process.env?.PWD || process.stdin?.path
     let dir = args._[0]
     if (dir) {
       step(bold('Using target directory: '+ dim('/'+ dir.replace(/^\//, ''))))
     } else {
-      dir = await input({ message: 'Target directory', default: root })
-      if (!dir.startsWith(root))
-        dir = join(root, dir)
+      dir = await input({ message: 'Target directory', default: _root })
+      if (!dir.startsWith(_root))
+        dir = join(_root, dir)
     }
 
-    const name = basename(/^(\.\/|\.\\|\.)$/.test(dir) ? root : dir)
-    const template = args.template || (await select({
+    const type = args.type || (await select({
       loop: true,
-      message: 'Which template do you want to use?',
-      choices: templates.map(v => ({ title: v, value: v})),
-      default: 'workerd',
+      message: 'Which type of project is it?',
+      choices: types.map(v => ({ title: v, value: v})),
     }))
 
-    if (!template)
-      throw new Error('No template selected')
+    if (!type)
+      throw new Error('No type selected')
+    if (!types.includes(type))
+      throw new Error(`Invalid type selected: ${type}`)
 
-    if (!templates.includes(template))
-      throw new Error(`Invalid template selected: ${template}`)
+    const dirs = ['base']
+    const name = basename(/^(\.\/|\.\\|\.)$/.test(dir) ? _root : dir)
 
-    if (existsSync(dir) && readdirSync(dir).length > 0) {
-      const response = await confirm({ message: 'Directory not empty. Continue?', default: false })
-      if (!response) process.exit(1)
+    if (type === 'server') {
+      const template = args.template || (await select({
+        loop: true,
+        message: 'Which template do you want to use?',
+        choices: templates.map(v => ({ title: v, value: v})),
+        default: 'workerd',
+      }))
+
+      if (!template)
+        throw new Error('No template selected')
+      if (!templates.includes(template))
+        throw new Error(`Invalid template selected: ${template}`)
+
+      dirs.push(template)
+    }
+
+    if (
+      existsSync(dir) && readdirSync(dir).length > 0
+      && !(await confirm({ message: 'Directory not empty. Continue?', default: false }))
+    ) {
+      process.exit(1)
     } else {
       mkdirp(dir)
     }
 
     const spinner = createSpinner('Cloning the template').start()
-    for (const t of ['base', template]) {
-      const templateDir = resolve(import.meta.dir, './templates/'+ t)
+    for (const d of dirs) {
+      const templateDir = resolve(import.meta.dir, `./templates/${type}/`+ d)
       const files = readdirSync(templateDir)
-      for (const file of files.filter(f => f !== 'package.json'))
+      for (const file of files)
         copy(join(templateDir, file), join(dir, renameFiles[file] ?? file))
     }
 
     spinner.success()
 
-    const pkgPath = resolve(__dirname, `./templates/base/package.json`)
+    const pkgPath = join(dir, 'package.json')
     if (existsSync(pkgPath)) {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
       pkg.name = name
@@ -136,11 +159,11 @@ export default command({
     }
 
     event('New project successfully created')
-    if (dir != root) {
+    if (dir != _root) {
       rn()
       console.log(
         dim('Get started with:'),
-        bold(`cd ${name}`),
+        bold(`cd ${name} && duto`),
       )
     }
 	},

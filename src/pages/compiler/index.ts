@@ -154,7 +154,7 @@ export async function renderPage(
     //   Buffer.from(buildHtml(assets, html, needsClient, allProps, pattern, islands)),
     //   {}
     //   // options != null ? options : {},
-    // )), 'i-i')
+    // )), 'l')
 
     const outFile = join(
       config.root,

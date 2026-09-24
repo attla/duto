@@ -16,18 +16,6 @@ export async function getConfig(name = 'config'): Promise<UserConfig & PluginOpt
   return config(opts)
 }
 
-// export const formatTime = (ms: number) => {
-//   if (ms < 1000) return `${ms}ms`
-//   return `${(ms / 1000).toFixed(2)}s`
-// }
-export const formatTime = (ms: number) => {
-  if (ms < 0.001) return `${(ms * 1_000_000).toFixed(2)}ns`
-  if (ms < 1) return `${(ms * 1000).toFixed(2)}µs`
-  if (ms < 1000) return `${ms.toFixed(2)}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`
-  return `${Math.floor(ms / 60000)}m ${((ms % 60000) / 1000).toFixed(1)}s`
-}
-
 const statusColorMap = new Map([
   [5, red],
   [4, yellow],
@@ -93,20 +81,12 @@ export function preview(
         let file = Bun.file(join(_root, dist, path))
 
         if (await file.exists()) {
-          // route = path
           res = new Response(file)
         } else {
           matched = match(path)
-
-          // console.log(matched)
           route = matched?.name || match404(meta, path)
-
           res = new Response(null, { status: 404 })
 
-          // for (const asset of path !== '/' && matched && matched.kind === 'exact' ? [
-          //   path,
-          //   join(path, 'index'),
-          // ] : ['index']) {
           for (const asset of [
             path,
             join(path, 'index'),
@@ -115,7 +95,6 @@ export function preview(
             file = Bun.file(join(_root, dist, asset +'.html'))
 
             if (await file.exists()) {
-              // if (route === '/' || !route) route = asset
               res = new Response(file)
               break
             }

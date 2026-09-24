@@ -32,8 +32,6 @@ export default command({
     const duto = getEnv('duto', {})
     const desiredPort = Number(args.port || duto?.dev?.port || 3000)
     const host = String(args.host || duto?.dev?.host || 'localhost')
-    // const desiredPort = args.port ? Number(args.port) : (config?.preview?.port ? Number(config.preview.port) : 3000)
-    // const host = args.host ? String(args.host) : (config?.preview?.host ? String(config.preview.host) : 'localhost')
 
     let buildProcess: Bun.Subprocess | null = null
 

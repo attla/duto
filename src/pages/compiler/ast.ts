@@ -313,9 +313,7 @@ export function findUsage(
 
   if (imports.length === 0) return imports
 
-  // fast lookup
   const map = new Map<string, ImportUsage>()
-
   for (const item of imports)
     map.set(item.local, item)
 
