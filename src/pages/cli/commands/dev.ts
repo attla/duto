@@ -26,18 +26,26 @@ export default command({
 		name: 'dev',
 		description: '🧪  Start dev server\n',
 	}, // @ts-ignore
-	args,
+  args: {
+    ...args,
+		minify: {
+			description: 'Minify the result',
+			type: 'boolean',
+			default: true,
+		},
+  },
   async run({ args }) {
     const config = await getConfig()
     const duto = getEnv('duto', {})
     const desiredPort = Number(args.port || duto?.dev?.port || 3000)
     const host = String(args.host || duto?.dev?.host || 'localhost')
 
+    const minify = args.minify ?? true
     let buildProcess: Bun.Subprocess | null = null
 
     const _build = async () => {
       if (buildProcess) await killProcess(buildProcess)
-      buildProcess = Bun.spawn(['duto', 'build', '--hmr'], {stdin: 'inherit', stdout: 'ignore', stderr: 'inherit'})
+      buildProcess = Bun.spawn(['duto', 'build', '--hmr', minify ? '' : '--no-minify'], {stdin: 'inherit', stdout: 'ignore', stderr: 'inherit'})
 
       try {
         const code = await buildProcess.exited

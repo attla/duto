@@ -1,4 +1,4 @@
-# Duto - Starter Template
+# Duto Server - Starter Template
 
 This template should help get you started developing.
 

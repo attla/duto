@@ -1,7 +1,7 @@
-import { basename, join, relative, resolve } from 'pathe'
+import { basename, join, resolve } from 'pathe'
 import { command } from 't0n/cli'
-import { bold, dim, green, red } from 't0n/color'
-import { event, error, step, log, rn } from 't0n/log'
+import { bold, dim, red } from 't0n/color'
+import { event, step, rn } from 't0n/log'
 import { _root } from '@/utils'
 
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
@@ -97,7 +97,7 @@ export default command({
     if (!types.includes(type))
       throw new Error(`Invalid type selected: ${type}`)
 
-    const dirs = ['base']
+    const dirs = [type === 'server' ? 'base' : '']
     const name = basename(/^(\.\/|\.\\|\.)$/.test(dir) ? _root : dir)
 
     if (type === 'server') {
@@ -125,7 +125,7 @@ export default command({
       mkdirp(dir)
     }
 
-    const spinner = createSpinner('Cloning the template').start()
+    const spinner = createSpinner('Cloning project..').start()
     for (const d of dirs) {
       const templateDir = resolve(import.meta.dir, `./templates/${type}/`+ d)
       const files = readdirSync(templateDir)
@@ -133,7 +133,7 @@ export default command({
         copy(join(templateDir, file), join(dir, renameFiles[file] ?? file))
     }
 
-    spinner.success()
+    spinner.success(bold('Cloned project'))
 
     const pkgPath = join(dir, 'package.json')
     if (existsSync(pkgPath)) {
@@ -142,13 +142,15 @@ export default command({
       writeFileSync(join(dir, 'package.json'), JSON.stringify(pkg, null, 2))
     }
 
-    if (args?.install) {
+
+    const install = args.install || (await confirm({ message: 'Install dependencies?', default: false }))
+    if (install) {
       const spinner2 = createSpinner('Installing project dependencies').start()
       const proc = Bun.spawn(['bun', 'i'], { stdout: 'ignore', stderr: 'inherit' })
       const procExit = await proc.exited
 
       if (procExit === 0) {
-        spinner2.success()
+        spinner2.success(bold('Installed dependencies'))
       } else {
         spinner2.stop({
           mark: red('×'),
@@ -158,12 +160,12 @@ export default command({
       }
     }
 
-    event('New project successfully created')
+    event(bold('Project successfully created'))
     if (dir != _root) {
       rn()
       console.log(
         dim('Get started with:'),
-        bold(`cd ${name} && duto`),
+        bold(`cd ${name} && duto dev`),
       )
     }
 	},

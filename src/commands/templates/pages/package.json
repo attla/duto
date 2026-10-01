@@ -1,0 +1,22 @@
+{
+  "name": "duto-docs",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "duto": "workspace:*",
+    "@preact/signals": "catalog:",
+    "preact": "catalog:"
+  },
+  "devDependencies": {
+    "bun-types": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  },
+  "duto": {
+    "type": "pages",
+    "platform": "workerd",
+    "dev": {
+      "port": 3000
+    }
+  }
+}

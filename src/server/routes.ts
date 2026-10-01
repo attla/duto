@@ -1,4 +1,4 @@
-import { Glob, file, write } from 'bun'
+import { file, write } from 'bun'
 
 import { copyFileSync } from 'node:fs'
 import { join, relative } from 'pathe'
@@ -12,7 +12,7 @@ import { STATUS_CODES } from 'node:http'
 import $ from './app'
 import _response from './response'
 import _validator from './validator'
-import { _root, _server } from '@/utils'
+import { _root, _server, scan } from '@/utils'
 import { getLastCommitHash, ensureDir, nextId, verbAlias } from './utils'
 import { generateOpenAPI, generateOpenAPIClient, openAPIConfig } from './open-api/spec'
 import { highlightedMethod, highlightedURI } from './cli/utils'
@@ -21,28 +21,6 @@ import type { Routes, Rule, StandardSchemaV1 } from './types'
 import { autorizedPath } from './middlewares/auth'
 import { isDev } from './utils/environment'
 
-export async function* scan(
-  dir: string | string[],
-  ext: string | string[],
-  ignore: string[] = ['*.d.*'],
-  cwd?: string,
-): AsyncGenerator<[string, string, any]> {
-  if (typeof dir !== 'string')
-    dir = ext.length === 1 ? dir[0] : `{${dir.join(',')}}`
-
-  if (typeof ext !== 'string')
-    ext = ext.length === 1 ? ext[0] : `{${ext.join(',')}}`
-
-  cwd ??= _root
-  for await (const file of new Glob(dir +'/**/*.'+ ext).scan({
-    cwd,
-    absolute: true,
-    onlyFiles: true, // @ts-ignore
-    ignore,
-  })) {
-    yield [file, file.split(cwd as string)[1], await IMPORT(file)]
-  }
-}
 
 const importName = (name: string | undefined, dirs: string[]) => (name || nextId()).replace(/\.ts$/, '')
 
@@ -407,10 +385,10 @@ export async function cacheRoutes() {
   if (isDev()) {
     const _file = join(_server, 'middlewares', 'logger.ts')
     const _mod = await IMPORT(_file) // @ts-ignore
-    middlewares.unshift({
+    middlewares.unshift({ // @ts-ignore
       path: _mod?.path || '*',
       name: 'dev_logger',
-      file: _file,
+      file: _file, // @ts-ignore
       handle: _mod.handle,
     })
   }

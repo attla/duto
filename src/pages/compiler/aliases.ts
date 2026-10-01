@@ -1,14 +1,8 @@
 import { join, resolve } from 'node:path'
-import { readFileSync } from 'node:fs'
 import { resolveExtension } from './file'
 
-export function getTsConfig(configPath = './tsconfig.json') {
-  const content = readFileSync(configPath, 'utf8')
-  return JSON.parse(content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))
-}
-
-export function getAliases(root: string) {
-  const tsconfig = getTsConfig(join(root, './tsconfig.json'))
+export async function getAliases(root: string) {
+  const tsconfig = await import(join(root, './tsconfig.json')) // @ts-ignore
   const compilerOptions = tsconfig.compilerOptions || {}
   const paths = Object.entries(compilerOptions.paths || {})
   const baseUrl = compilerOptions.baseUrl || '.'

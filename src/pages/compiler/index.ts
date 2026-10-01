@@ -1,30 +1,23 @@
+import { promisify } from 'node:util'
+import { brotliCompress } from 'node:zlib'
 import { mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
-import { getLayouts, parsePage, resolveStaticOutputPath } from './meta'
 
 import { h } from 'preact'
 import { render } from 'preact-render-to-string'
 import minify from '@minify-html/node'
 
-import type { ResolvedConfig } from 'vite'
+import { JSJSON } from 't0n'
 import { DOCTYPE_RE } from './constants'
-import { getAsset, getChunk, normalizeId } from './assets'
+import { getAsset, getChunk } from './assets'
+import { getLayouts, resolveStaticOutputPath } from './meta'
+import { setLocale } from '../i18n/client'
 
+import type { ResolvedConfig } from 'vite'
 import type { IRoute, Metadata, RouteParams, StaticProps, SummaryMetadata } from './types'
 
 
-// import i18n from '../client/i18n'
-import { setLocale } from '../i18n/client'
-
-
-
-import { promisify } from 'node:util'
-import { brotliCompress } from 'node:zlib'
-
-const brCompress = promisify(brotliCompress);
-
-
-export const selfCloseEmptyTags = (html: string, tagName: string) => html.replace(new RegExp(`<${tagName}\\b([^>]*?)>\\s*</${tagName}>`, 'g'), (_, attrs) => `<${tagName}${attrs} />`)
+const brCompress = promisify(brotliCompress)
 
 export async function renderPage(
   meta: Metadata,
@@ -32,40 +25,15 @@ export async function renderPage(
   page: IRoute
  ) {
   const {
-    mod, islands,
+    mod,
     hasGetProps, hasGetStaticProps,
     isClientOnly,
-  } = await parsePage(page, meta)
-  // const {
-  //   mod, islands,
-  //   hasGetProps, hasGetStaticProps,
-  //   isClientOnly,
-  // } = page
+  } = page
+  if (!mod?.default)
+    return console.warn(`No default export in ${page.filePath} — skipping`)
 
-  if (!mod?.default) {
-    console.warn(`No default export in ${page.filePath} — skipping`)
-    return
-  }
-
-  // console.log(page.filePath)
-  // console.error('hasGetProps:', hasGetProps)
-  // console.error('hasGetStaticProps:', hasGetStaticProps)
-  // console.error('isClientOnly:', isClientOnly)
-
-  if (page.isInternal || page.is404 || (page.isDynamic && !hasGetStaticProps)) {
-    meta.summary.set('/'+ page.fileName, {
-      type: 2,
-      path: '/'+ page.fileName,
-      size: 0,
-      sizeBr: 0,
-      sizeJS: 0,
-    })
-    // meta.routes.set(page.fullFilePath, page)
-    return
-  }
-
-  // console.log(meta.routes.size)
-  // meta.routes.set(page.filePath, page)
+  if (page.isInternal || page.is404 || (page.isDynamic && !hasGetStaticProps))
+    return meta.summary.set('/'+ page.fileName, { type: 2, path: '/'+ page.fileName, size: 0, sizeBr: 0, sizeJS: 0 })
 
   const { filePath, pattern, params } = page
 
@@ -108,7 +76,6 @@ export async function renderPage(
     const allProps = { ...prop.pageProps, ...prop.routeParams }
 
     // @ts-ignore
-    // i18n(allProps?.locale || meta.i18n.fallbackLocale, meta.i18n.locales, meta.i18n.messages, meta.i18n.routes, meta.i18n.routeMap)
     allProps?.locale && setLocale(allProps?.locale || meta.i18n.fallbackLocale)
 
     const pathname = resolveStaticOutputPath(page, prop.routeParams)
@@ -138,34 +105,10 @@ export async function renderPage(
       }
     // }
 
-    // TODO: refatorar isso... aqui dentro já é o SSG
-    const needsClient = hasGetProps || !!isClientOnly || islands.length > 0
+    html = buildHtml(html, Object.keys(allProps).length ? allProps : undefined)
 
-    // console.error(page.fileName)
-    // console.error('needsClient: ', needsClient)
-
-    const assets = []
-    for (const [depPath, dep] of meta.map.get(page.fullFilePath)!.deps)
-      assets.push(normalizeId(dep.path))
-
-
-    html = buildHtml(assets, html) //, needsClient, allProps, pattern, islands)
-    // html = selfCloseEmptyTags(String(minify.minify(
-    //   Buffer.from(buildHtml(assets, html, needsClient, allProps, pattern, islands)),
-    //   {}
-    //   // options != null ? options : {},
-    // )), 'l')
-
-    const outFile = join(
-      config.root,
-      config.build.outDir,
-      pathname +'.html'
-    )
-    const outHTML = meta.minify ? minify.minify(
-      Buffer.from(html),
-      {}
-      // options != null ? options : {},
-    ) : html
+    const outFile = join(config.root, config.build.outDir, pathname +'.html')
+    const outHTML = meta.minify ? minify.minify(Buffer.from(html), {}) : html
     await mkdir(dirname(outFile), {recursive: true})
     await Bun.write(outFile, outHTML)
 
@@ -206,12 +149,8 @@ export async function renderPage(
 }
 
 function buildHtml(
-  _assets: string[],
   html: string,
-  // needsClient: boolean,
-  // props?: StaticProps,
-  // routePattern?: string,
-  // islands?: Island[],
+  props?: StaticProps,
 ): string {
   if (!(html.includes('<body') || html.includes('<html') || html.includes('<head')))
     html = wrapHtml(html)
@@ -219,58 +158,14 @@ function buildHtml(
   if (!DOCTYPE_RE.test(html))
     html = '<!DOCTYPE html>'+ html
 
-//   const pageProps = needsClient
-//     ? `<script>
-// window.__PROPS__ = ${JSON.stringify(props ?? {})};
-// </script>`
-//     : ''
-
   const assets = [
     ':duto/client/app.tsx',
-    // ..._assets,
   ]
 
   const prepend = assets.map(asset => {
     const href = getAsset(asset)
     return href ? `<link href="${href}" rel=stylesheet>` : null
   }).filter(Boolean).join('')
-    // + `<style>d-b,d-p,i-d,i-s{display:contents}</style>`
-    // + `<style>d,d-slot,d-s-slot{display:contents}</style>`
-
-//     d>*,d-slot>*,d-s-slot>*{display:revert}
-
-// d {
-//   display: block;
-//   box-sizing: border-box;
-// }
-
-// /* Herda todos os estilos padrão de div */
-// d:not([hidden]) {
-//   display: block;
-// }
-
-// /* Remove qualquer comportamento de display:contents */
-// d, d-slot, d-s-slot {
-//   display: block !important;
-// }
-
-//   d *,
-//   d-slot *,
-//   d-s-slot * {
-//     visibility: visible !important;
-//     opacity: 1 !important;
-//   }
-//     </style>
-
-//     <script>class DDiv extends HTMLElement {
-//     constructor() {
-//       super();
-//     }
-//   }
-
-//   if (typeof customElements !== 'undefined' && !customElements.get('d')) {
-//     customElements.define('d', DDiv);
-//   }</script>
 
   if (html.includes('</head>')) {
     html = html.replace('</head>', prepend +'</head>')
@@ -280,8 +175,7 @@ function buildHtml(
     html = prepend + html
   }
 
-  // const append = pageProps + assets.map(file => {
-  const append = assets.map(file => {
+  const append = (props ? `<script>(self.$duto=self.$duto||{}).props=${JSJSON(props)}</script>` : '') + assets.map(file => {
     const src = getChunk(file)
     return src ? `<script src="${src}" type=module></script>` : null
   }).filter(Boolean).join('')

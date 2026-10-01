@@ -84,12 +84,22 @@ export const getLocale = () => {
   }
 }
 
-export const setLocale = (lang: string) => {
+export const setLocale = async (lang: string) => {
+  await loadLang(lang)
   cache(lang)
   _locale = accepted(lang, _locales, _detected)
 }
 
-export default function i18n(
+async function loadLang(lang: string) {
+  if (!_routes[lang] || !_messages[lang]) {
+    const intlMod = await import('/'+ lang +'.js')
+    if (!intlMod) return
+    _routes[lang] = intlMod.routes ?? intlMod.default?.routes
+    _messages[lang] = intlMod.messages ?? intlMod.default?.messages
+  }
+}
+
+export default async function i18n(
   fallbackLocale: string,
   locales: string[],
   messages: Record<string, Record<string, string>>,
@@ -102,6 +112,8 @@ export default function i18n(
   _routeMap = routeMap
   _detected = detect(locales, fallbackLocale)
   _locale = typeof window === 'undefined' ? fallbackLocale : getLocale()
+
+  await loadLang(_locale)
 
   // console.error(routes)
   // console.error(routeMap)
@@ -173,10 +185,10 @@ type TProps = {
 }
 
 const lookup = (key: string, lang: string): string => {
-  if (!key) return '';
-  if (key.startsWith('_')) return key.replace(/^_+/, '');
-  const msg = _messages[lang] ?? _messages[_locale];
-  return (key in msg ? msg[key] : key) as string;
+  if (!key) return ''
+  if (key.startsWith('_')) return key.replace(/^_+/, '')
+  const msg = _messages[lang] ?? _messages[_locale]
+  return (msg && key in msg ? msg[key] : key) as string
 }
 
 const interpolate = (template: string, params: Record<string, Primitives> | Primitives[]): string => {

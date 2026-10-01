@@ -1,3 +1,4 @@
+import { IMPORT } from 't0n'
 import { dirname, join } from 'pathe'
 
 export const _duto = dirname(new URL(import.meta.url).pathname)
@@ -19,4 +20,27 @@ export const formatTime = (ms: number) => {
   if (ms < 1000) return `${ms.toFixed(2)}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`
   return `${Math.floor(ms / 60000)}m ${((ms % 60000) / 1000).toFixed(1)}s`
+}
+
+export async function* scan(
+  dir: string | string[],
+  ext: string | string[],
+  ignore: string[] = ['*.d.*'],
+  cwd?: string,
+): AsyncGenerator<[string, string, any]> {
+  if (typeof dir !== 'string')
+    dir = ext.length === 1 ? dir[0] : `{${dir.join(',')}}`
+
+  if (typeof ext !== 'string')
+    ext = ext.length === 1 ? ext[0] : `{${ext.join(',')}}`
+
+  cwd ??= _root
+  for await (const file of new Bun.Glob(dir +'/**/*.'+ ext).scan({
+    cwd,
+    absolute: true,
+    onlyFiles: true, // @ts-ignore
+    ignore,
+  })) {
+    yield [file, file.split(cwd as string)[1], await IMPORT(file)]
+  }
 }

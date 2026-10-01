@@ -8,6 +8,7 @@ import config from '#/compiler/vite-plugin'
 import { _root } from '@/utils'
 import { match, match404 } from '#/compiler/routes'
 import type { Metadata, PluginOptions } from '#/compiler/types'
+import { EXTENSIONS_LIST } from '#/compiler/constants'
 
 export async function getConfig(name = 'config'): Promise<UserConfig & PluginOptions> {
   let opts = {} as UserConfig
@@ -107,7 +108,8 @@ export function preview(
         status = 500
         throw err
       } finally {
-        if (route || matched) {
+        if (EXTENSIONS_LIST.has(path.split('.').pop()!.toLowerCase())) {
+        } else if (route || matched) {
           const elapsed = `${Math.max(1, Math.ceil(performance.now() - start))}ms`
 
           console.log([

@@ -1,13 +1,12 @@
-import { join } from 'pathe'
-import { _root } from '@/utils'
-import type { IRoute, Metadata } from './types'
-import { dirname } from 'node:path'
+import { dirname, join } from 'pathe'
 import { NF_NAMES } from './constants'
+import { _root } from '@/utils'
+import type { Metadata } from './types'
 
 export const router = new Bun.FileSystemRouter({
   style: 'nextjs',
   dir: join(_root, 'pages'),
-  // origin: 'https://mydomain.com',
+  // origin: 'https://example.com',
   // assetPrefix: 'assets/',
 })
 export const reload = () => router.reload()

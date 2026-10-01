@@ -21,8 +21,7 @@ export const navigate = <S = any>(
     return
   }
 
-  const n = window?.$duto?.navigate || useLocation()[1]
-  n(to, options)
+  window?.$duto?.navigate || useLocation()[1](to, options)
 }
 
 export { Link } from './components/link'

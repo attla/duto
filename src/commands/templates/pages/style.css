@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+html, body {
+  @apply overscroll-none
+}
+
+.text-mono {
+  font-family: ui-monospace,SFMono-Regular,monospace;
+  --tw-font-weight: 300;
+  font-weight: 300
+}
+
+.text-sky-gratient {
+  @apply bg-clip-text text-transparent;
+  background-image: radial-gradient(138.06% 1036.51% at 95.25% -2.54%, rgb(112, 209, 255) 14.06%, rgb(173, 228, 255) 51.02%, rgb(219, 243, 255) 79.09%);
+}
+
+.title {
+  @apply text-4xl lg:text-[3.5rem] leading-[1.1] font-semibold tracking-tight text-balance
+}
+
+.sub-title {
+  @apply mt-4 max-w-[60ch] text-lg text-balance md:mt-6 md:text-xl
+}

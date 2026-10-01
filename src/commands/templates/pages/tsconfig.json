@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "bun-types", "node"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "useDefineForClassFields": true,
+
+    /* Linting */
+    "strict": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "paths": {
+      "react": ["./node_modules/preact/compat/"],
+      "react-dom": ["./node_modules/preact/compat/"],
+      // "@duto/*": ["./@duto/*"],
+      // "duto/*": ["./node_modules/duto/*"],
+      // "~icons/*": ["./@iconify-json/*"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "components",
+    "configs",
+    "enums",
+    "libs",
+    "i18n",
+    "pages",
+    "tests/**/*",
+    "utils",
+    "i18n.ts",
+    "i18n.tsx",
+    "config.ts",
+    "types.ts"
+  ],
+  "exclude": [
+    ".duto",
+    "node_modules"
+  ]
+}

@@ -6,17 +6,17 @@ import { defineConfig } from 'vite'
 
 import preact from '@preact/preset-vite'
 import tailwind from '@tailwindcss/vite'
+import { JSJSON } from 't0n'
 
 import { EXT_RE } from './constants'
-import { setAsset, setChunk, setEntry } from './assets'
+import { getChunk, setAsset, setChunk, setEntry } from './assets'
 import { renderPage } from '.'
 import { removeExports, resolveImport } from './ast'
 import { getMetadata } from './meta'
 
 import type {
-  // Plugin,
   UserConfig, ConfigEnv, ResolvedConfig,
-  PreviewServer,
+  // PreviewServer,
   // ViteDevServer,
   EnvironmentOptions,
   PluginOption,
@@ -42,6 +42,7 @@ export const config = (opts: UserConfig & PluginOptions) => { // @ts-ignore
   return defineConfig(opts)
 }
 
+// TODO: remover..
 export default config
 
 let metadata: Metadata
@@ -50,13 +51,11 @@ export function meta() {
 }
 
 export function plugin(options: PluginOptions = {}): PluginOption[] {
-  // let server: ViteDevServer
   let config: ResolvedConfig
   const {
-    root = _root, // process.env.npm_config_local_prefix || process.env.PWD || process.cwd() || __dirname,
+    root = _root,
     pagesDir = 'pages',
   } = options
-  // let metadata: Metadata
 
   const PAGES_RE = new RegExp(`\/${pagesDir}\/.*\.(tsx?|jsx?)$`, 'i')
   const stripTarget = new Set(['getStaticProps'])
@@ -105,17 +104,8 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
       name: 'duto:scan',
       enforce: 'pre',
 
-      // configureServer(_server) {
-      //   server = _server
-      //   // servers.push(server)
-      // },
-
       async config(conf: UserConfig, env: ConfigEnv) {
         metadata = await getMetadata(root as string, pagesDir)
-
-        // console.log(metadata.map)
-        // console.log(metadata.violations)
-        // console.log(Array.from(metadata.violations).filter(file => EXT_RE.test(file)))
 
         if (conf.build) {
           // conf.build.emptyOutDir = false
@@ -129,10 +119,11 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
           conf.build.rolldownOptions = conf.build.rolldownOptions || {}
           conf.build.rolldownOptions.preserveEntrySignatures = 'exports-only' ///
           conf.build.rolldownOptions.input = [
+            ...metadata.routes.map(r => r.is404 ? '' : r.fullFilePath).filter(Boolean),
             ':duto/client/app.tsx',
             // ':duto/not-found.tsx',
-            ...Object.keys(metadata.pages),
-            ...metadata.assets,
+            // ...Object.keys(metadata.pages),
+            // ...metadata.assets,
           ]
 
           const filePrefix = metadata.minify ? '' : '[name].'
@@ -141,11 +132,6 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             hoistTransitiveImports: false,
             format: 'esm',
             minifyInternalExports: metadata.minify,
-
-            // manualChunks: {
-            //   vendor: ['preact', '@preact/signals', 'wouter-preact'],
-            // },
-            // preserveModules: true,
             preserveModulesRoot: '/',
             assetFileNames: filePrefix +'[hash][extname]',
             entryFileNames: filePrefix +'[hash].js',
@@ -155,14 +141,19 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             // entryFileNames: 'assets/[name].js',
             // chunkFileNames: 'assets/chunks/[name]-[hash].js',
             // assetFileNames: 'assets/[name][extname]',
+
+            // manualChunks: {
+            //   vendor: ['preact', '@preact/signals', 'wouter-preact'],
+            // },
+            // preserveModules: true,
           }
         }
 
         return conf
       },
 
-      async configResolved(conf) {
-        config = conf
+      async configResolved(c) {
+        config = c
       },
 
       resolveId(id) {
@@ -217,15 +208,18 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
         // for (const id of moduleIds)
         // console.error(id)
 
+        // TODO: rever isso...
         for (const key in bundle) {
           const file = bundle[key]
+
           if (file.type === 'chunk' && file.isEntry) {
             setChunk(file.facadeModuleId, '/'+ file.fileName)
             continue
           }
 
           if (file.type === 'asset' && file?.originalFileName?.endsWith('duto/pages/client/app.tsx'))
-            file.source += 'd-b,d-p,i-d,i-s,i-i{display:contents}'
+            file.source += 'i-i{display:contents}'
+            // file.source += 'd-b,d-p,i-d,i-s,i-i{display:contents}'
 
           if (file.type === 'asset' && file.fileName.endsWith('.css')) {
             setAsset(resolveImport(file.originalFileName as string, metadata.root, metadata.aliases), '/'+ file.fileName)
@@ -241,6 +235,35 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
 
     },
 
+    // {
+    //   name: 'duto:routes-inject',
+    //   enforce: 'post',
+    //   generateBundle(_, bundle) {
+    //     // monta o mapa a partir dos inputs de metadata.routes
+    //     const routeMap: Record<string, string> = {}
+    //     for (const r of metadata.routes) {
+    //       if (r.is404) continue
+    //       // encontra o chunk cujo facadeModuleId bate com r.fullFilePath
+    //       for (const [fileName, chunk] of Object.entries(bundle)) {
+    //         if (chunk.type === 'chunk' && chunk.facadeModuleId === r.fullFilePath) {
+    //           routeMap[r.path] = fileName
+    //           break
+    //         }
+    //       }
+    //     }
+
+    //     // injeta no chunk do app
+    //     for (const chunk of Object.values(bundle)) {
+    //       if (chunk.type !== 'chunk') continue
+    //       if (chunk.facadeModuleId?.includes('app.tsx') || chunk.code.includes('__DUTO_ROUTES__')) {
+    //         chunk.code = chunk.code.replace(
+    //           '__DUTO_ROUTES__',
+    //           JSON.stringify(routeMap)
+    //         )
+    //       }
+    //     }
+    //   }
+    // },
     {
       name: 'duto:build',
       enforce: 'pre',
@@ -275,13 +298,36 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
       },
 
       async closeBundle() {
-        for (const [_filePath, page] of metadata.pages) // {
+        for (const [_filePath, page] of metadata.pages)
           await renderPage(metadata, config, page)
           // const mod = await server.ssrLoadModule(_filePath)
-        // }
 
         rmSync(join(metadata.root, 'tmp'), {recursive: true, force: true})
         // await server.close()
+
+        const outPath = join(config.root, config.build.outDir)
+        const entry = Bun.file(join(outPath, getChunk(':duto/client/app.tsx')))
+        let entryContent = await entry.text()
+
+        for (const r of metadata.routes.filter(r => !r.is404))
+          entryContent = entryContent.replace(r.fullFilePath, getChunk(r.fullFilePath.replace(config.root, '')))
+
+        await entry.write(entryContent)
+
+        // i18n
+        for (const locale of metadata.i18n.locales) {
+          const intlPath = join(metadata.root, 'i18n', locale + '.ts')
+          if (existsSync(intlPath)) {
+            const intlMod = await import(intlPath)
+            await Bun.write(
+              join(outPath, locale +'.js'),
+              `var a=${JSJSON({
+                routes: intlMod.routes ?? intlMod.default?.routes,
+                messages: intlMod.messages ?? intlMod.default?.messages,
+              })};export { a as default }`
+            )
+          }
+        }
       },
 
       // TODO: precisa ser aqui mesmo pois se a pagina for importada no entry, pode incluir codigo nao usado no chunck/bundle
