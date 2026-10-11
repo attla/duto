@@ -1,6 +1,5 @@
 import { h, type JSX } from 'preact'
 import { local } from '#/client/storage'
-import { navigate } from '..'
 
 const accepted = (lang: string | undefined, locales: string[] = [], fallback: string) => lang && locales.includes(lang) ? lang : fallback
 
@@ -41,7 +40,7 @@ const getAccepted = (lang: string, locales: string[] = [], defaultLocale = '') =
   return defaultLocale
 }
 
-const detect = (locales: string[], defaultLocale: string) => {
+export const detect = (locales: string[], defaultLocale: string) => {
   if (!defaultLocale) defaultLocale = 'en'
   if (typeof window === 'undefined') return defaultLocale
 
@@ -125,7 +124,7 @@ export const cached = () => local.get('lang') as string || ''
 export const updateWidth = (el: HTMLSelectElement) => {
   if (el) {
     const option = el.querySelector(`option[value="${el.value}"]`) as HTMLOptionElement
-    const length = option.textContent.split(' ')[0]?.length || 0
+    const length = option?.textContent.split(' ')[0]?.length || 0
     el.style.width = (length * 15.7)+ 'px'
   }
 }
@@ -153,7 +152,7 @@ export const r = (key: string, lang?: string) => {
   const path = '/'+ lang + (key ? '/'+ route(key, lang) : '')
 
   if (!location.pathname.endsWith(path))
-    navigate(path)
+    self.$duto?.navigate(path)
 
   // return '/' + lang + '/' + (key in _routes[lang] ? _routes[lang][key] : key)
 }

@@ -1,4 +1,4 @@
-import { Link as WouterLink, useLocation } from 'wouter-preact'
+import { useLocation } from 'wouter-preact'
 import type { LinkProps } from 'wouter-preact'
 
 const isExternalUrl = (href?: string) =>
@@ -12,27 +12,19 @@ export const Link = ({
   href = to,
   ...rest
 }: LinkProps) => {
-  const isExternal = isExternalUrl(rest.href = href)
-  const isSRoute = window?.$duto?.sroutes?.has(href)
-
-  if (isExternal) {
+  if (isExternalUrl(rest.href = href)) {
     rest.target = '_blank'
     rest.rel = 'noopener noreferrer'
+  } else {
+    rest.is = 'i-l'
   }
 
-  if (!href || isExternal || isSRoute) {
-    const [pathname] = useLocation()
-    const baseClass = typeof rest.class === 'string' || !rest?.class
-      ? (rest.class || '') as string
-      : ''
-    rest.class = baseClass + (pathname === href ? ' active' : '')
+  const [pathname] = useLocation()
+  const baseClass = typeof rest.class === 'string' || !rest?.class
+    ? (rest.class || '') as string
+    : ''
+  rest.class = baseClass + (pathname === href ? ' active' : '')
 
-    !href && (delete rest.href)
-    return <a is='i-l' {...rest} />
-  }
-
-  if (typeof rest.class === 'string' || !rest?.class)
-    rest.className = a => (rest.class || '') + (a ? ' active' : '')
-
-  return <WouterLink is='i-l' {...rest} />
+  !href && (delete rest.href)
+  return <a {...rest} />
 }

@@ -1,15 +1,17 @@
 import type { ComponentChildren } from 'preact'
 
 import LocaleSelect from '@/components/locale-select'
+import ThemeSelect from '@/components/theme-select'
 
 export default function Layout({ children }: { children: ComponentChildren }) {
   return (
-    <div class="relative w-full max-w-full min-h-svh overflow-hidden flex flex-col flex-1 justify-center items-center bg-gradient-to-br from-zinc-800 to-zinc-950 text-gray-300 select-none">
+    <>
       <div class='absolute top-10 right-10'>
+        <ThemeSelect class='mr-5' />
         <LocaleSelect />
       </div>
 
-      <main class="flex justify-center items-center px-6 py-16 min-h-[calc(100vh-3.75rem)]" children={children} />
+      <main class="flex flex-col justify-center items-center px-6 py-16 min-h-[calc(100vh-3.75rem)]" children={children} />
 
       <footer class="py-[1.1rem] relative text-base lex flex-row items-center mx-auto">
         <a href="https://hub.bi?ref=duto" class="no-underline group flex items-center justify-center" target="_blank" rel="noopener noreferrer">
@@ -19,6 +21,6 @@ export default function Layout({ children }: { children: ComponentChildren }) {
             HUB</span>
         </a>
       </footer>
-    </div>
+    </>
   )
 }

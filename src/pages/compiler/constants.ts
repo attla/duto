@@ -7,6 +7,8 @@ export const DOCTYPE_RE = /<!doctype html/i
 
 // export const USE_CLIENT_RE = /^[\s\r\n]*["']use client["'](?=[\s\r\n]|$)/m
 export const USE_CLIENT_RE = /^(?:\s|\/\/.*\n|\/\*[\s\S]*?\*\/)*["']use client["'](?=\s|;|$)/
+export const USE_RAW_RE = /^(?:\s|\/\/.*\n|\/\*[\s\S]*?\*\/)*["']use raw["'](?=\s|;|$)/
+export const USE_HTML_RE = /^(?:\s|\/\/.*\n|\/\*[\s\S]*?\*\/)*["']use html["'](?=\s|;|$)/
 
 export const LAYOUT_NAMES = ['_layout', 'layout']
 export const NF_NAMES = ['404', 'not-found']

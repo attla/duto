@@ -5,6 +5,9 @@ export default {
     notfound: 'not-found',
   },
   messages: {
+    auto: 'System default',
+    dark: 'Dark theme',
+    light: 'Light theme',
     title: 'Welcome to Duto',
     description: 'A fast, lightweight framework that keeps things simple!',
     gotodocs: 'Go to docs',
@@ -13,5 +16,8 @@ export default {
     backhome: 'Back to homepage',
     about: 'About',
     shop: 'Shop',
+
+    blog: 'Blog',
+    b1: 'This page is also static, the data was loaded via',
   },
 }

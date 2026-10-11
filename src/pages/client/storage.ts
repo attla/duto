@@ -6,7 +6,7 @@ interface IStoreChange<TValue> {
   old: TValue | null,
 }
 
-type IStoreListener<TValue> = (change: IStoreChange<TValue>) => void
+export type IStoreListener<TValue> = (change: IStoreChange<TValue>) => void
 
 /**
  * Store reativo que encapsula o localStorage.

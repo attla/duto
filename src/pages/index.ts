@@ -1,27 +1,10 @@
 export {
-  Redirect,
-  useLocation, useParams, useSearch, useSearchParams,
-  matchRoute,
-} from 'wouter-preact'
-
-export {
-  t, r, d,
-  getLocale, setLocale,
-  isPrefixed,
+  route, r, redirect,
+  t, tl, d,
+  getLocale, setLocale, isPrefixed,
 } from './i18n/client'
 
 export { local } from './client/storage'
 
-export const navigate = <S = any>(
-  to: string | URL,
-  options?: { replace?: boolean; state?: S; transition?: boolean }
-) => {
-  if (window?.$duto?.sroutes?.has(to)) {
-    location.pathname = to
-    return
-  }
-
-  window?.$duto?.navigate || useLocation()[1](to, options)
-}
-
+export * from './client/theme'
 export { Link } from './components/link'

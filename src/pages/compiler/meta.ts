@@ -1,15 +1,9 @@
-// https://github.com/cloudflare/vinext/blob/main/packages/vinext/src/routing/utils.ts
-
-// https://github.com/cloudflare/vinext/blob/adfc2236cba5f7cde63f32f6fb35c0d892428376/packages/vinext/src/build/prerender.ts#L203
-// https://github.com/cloudflare/vinext/blob/main/packages/vinext/src/entries/pages-client-entry.ts
-// https://github.com/cloudflare/vinext/blob/main/packages/vinext/src/shims/ALS-ARCHITECTURE.md
-
 import { dirname, extname } from 'node:path'
 
 import { getEnv, JSJSON, newID } from 't0n'
 
 import { getAliases } from './aliases'
-import { DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE, NF_NAMES, FILE_EXTENSIONS } from './constants'
+import { DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE, NF_NAMES, FILE_EXTENSIONS, USE_RAW_RE, USE_HTML_RE } from './constants'
 import { scan } from '@/utils'
 
 import { USE_CLIENT_RE } from './constants'
@@ -23,13 +17,10 @@ import type {
   SummaryMetadata,
 } from './types'
 
-
-// TODO: https://github.com/cloudflare/vinext/blob/adfc2236cba5f7cde63f32f6fb35c0d892428376/packages/vinext/src/routing/file-matcher.ts#L90
 export async function getPages(meta: Metadata) {
   const nf = new Map<string, IRoute>()
   const layouts = new Map<string, IRoute>()
   const pages = new Map<string, IRoute>()
-  const spages = new Set<string>()
   const routes: IRoute[] = []
 
   for await (const [file, path, mod] of scan(meta.dir, FILE_EXTENSIONS)) {
@@ -59,7 +50,9 @@ export async function getPages(meta: Metadata) {
       layouts: [],
       hasGetStaticProps: typeof mod.getStaticProps === 'function',
       hasGetProps: typeof mod.getProps === 'function',
-      isClientOnly: USE_CLIENT_RE.test(content),
+      useClient: USE_CLIENT_RE.test(content),
+      useRaw: USE_RAW_RE.test(content),
+      useHtml: USE_HTML_RE.test(content),
     }
 
     if (LAYOUT_RE.test(path)) {
@@ -77,31 +70,13 @@ export async function getPages(meta: Metadata) {
     if (!page.isInternal)
       pages.set(file, page)
 
-    if (!page.isInternal)
+    if (!page.isInternal && !page.useRaw && !page.useHtml)
       routes.push(page)
-
-    if (!page.isInternal) {
-      if (page.isDynamic && page.hasGetStaticProps) {
-        try {
-          const _props = await page.mod.getStaticProps?.()
-          const props = Array.isArray(_props) ? _props : [_props]
-          for (const prop of props)
-            spages.add('/'+resolveStaticOutputPath(page, prop as any))
-
-        } catch(e) {
-          console.log('errro', e)
-        }
-      } else if (!page.isDynamic) {
-        spages.add(page.pattern)
-      }
-    }
-
   }
 
   meta.nf = nf
   meta.layouts = layouts
   meta.pages = pages
-  meta.spages = spages
   meta.routes = await sortRoutes(meta, routes)
 }
 
@@ -140,7 +115,6 @@ ${Array.from(meta.layouts.values()).map(l => `\nimport Layout${l.importName} fro
 
 export const views = [${meta.routes.map(r => `['${r.pattern}',${r.is404 ? 'Page'+ r.importName : `'${r.fullFilePath}'`},${Object.keys(r.params).length ? JSJSON(Object.entries(r.params).map(([_,v]) => v)) : '0'}${r.hasGetProps ? (r.is404 ? `,getProps${r.importName}` : `,1`) : (r.layouts.length ? ',0': '')}${r.layouts.length ? ',[' + Object.entries(r.layouts).map(([_,l]) => 'Layout'+l.importName) +']' : ''}]`).join(',')}]
 
-export const SRoutes = new Set(${JSJSON([...meta.spages])})
 `
 
   return meta
@@ -153,6 +127,8 @@ export const SRoutes = new Set(${JSJSON([...meta.spages])})
 
 
 // //////////////////////////////////////////////////////////////////////////////////////////
+// https://github.com/cloudflare/vinext/blob/main/packages/vinext/src/routing/utils.ts
+
 type RouteMeta = {
   staticSegments: number,
   dynamicSegments: number,

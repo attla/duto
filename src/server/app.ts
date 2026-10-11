@@ -10,6 +10,7 @@ import { isDev } from './utils/environment'
 import { getVerb } from './utils'
 import { registerMiddleware, resolveHandle, resolveMw } from './handle'
 
+const NFHandler = () => response.notFound()
 async function EHandler(e: Error | HTTPResponseError) {
   console.error(e)
 
@@ -74,7 +75,7 @@ export default function createApp<E extends Env>(options?: ServerOptions<E>) {
 
   // @ts-ignore
   app.onError(options?.onError || EHandler)
-  app.notFound(options?.notFound || response.notFound)
+  app.notFound(options?.notFound || NFHandler)
 
   if (options?.init) options.init(app)
 

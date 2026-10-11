@@ -1,6 +1,5 @@
-// import type { ComponentType, FunctionComponent, VNode } from 'preact'
-import type { Platform } from '$/cli/types'
 import type { FunctionComponent, VNode } from 'preact'
+import type { Platform } from '$/cli/types'
 
 export type PluginOptions = {
   root?: string,
@@ -43,8 +42,7 @@ export type Metadata = {
   aliases: Record<string, string>,
   layouts: Map<string, IRoute>, // all layouts
   nf: Map<string, IRoute>, // all 404
-  pages: Map<string, IRoute>, // all
-  spages: Set<string>, // ssg pages
+  pages: Map<string, IRoute>, // all pages
   routes: Routes, // client-side
   // routes: Map<string, IRoute>, // client-side
   i18n: I18nMetadata,
@@ -64,15 +62,17 @@ export type PageModule<P = {}> = {
  * getStaticProps — build-only.
  * For static pages (no dynamic segments): returns a single props object.
  * For dynamic pages: returns an array of { [routeParam]: value, ...props }
- *
  */
 export type GetStaticProps =
   | (() => StaticProps | Promise<StaticProps>)
   | (() => StaticProps[] | Promise<StaticProps[]>)
 export type StaticProps = Record<string, unknown>
 
-export type GetProps = (params: RouteParams) => StaticProps | Promise<StaticProps>
 export type RouteParams = Record<string, string | string[] | undefined>
+export type GetProps = (params: RouteParams) => StaticProps | Promise<StaticProps>
+export type Params = Record<string, RouteParams>
+
+export type View = [string, Page, Params | 0, GetProps | 0 | 1 | null, Page[]]
 
 export type Routes = IRoute[]
 export type IRoute = {
@@ -80,34 +80,25 @@ export type IRoute = {
   mod: PageModule,
   hasGetStaticProps: boolean,
   hasGetProps: boolean,
-  isClientOnly: boolean,
+  useClient: boolean,
+  useRaw: boolean,
+  useHtml: boolean,
   layouts: IRoute[],
   importName: string,
+
+  props?: StaticProps,
 
   ////////////////////////////
 
   fileExt: string,
   fileName: string,
-  /** Original file path relative to pages dir, e.g. `blog/[slug].tsx` */
-  filePath: string,
+  filePath: string, // Original file path relative to pages dir, e.g. `blog/[slug].tsx`
   fullFilePath: string,
-  /** Wouter-compatible pattern, e.g. `/blog/:slug` */
-  pattern: string,
-  /** Params extracted from the path segments */
-  params: Record<string, RouteParam>,
-  // params: RouteParam[],
-	/**
-	 * Similar to the "params" field, but with more associated metadata. For example, for `/site/[blog]/[...slug].tsx`, the segments are:
-	 *
-	 * 1. `{ content: 'site', dynamic: false, spread: false }`
-	 * 2. `{ content: 'blog', dynamic: true, spread: false }`
-	 * 3. `{ content: '...slug', dynamic: true, spread: true }`
-	 */
-	// segments: RoutePart[][]; // alternativa ao "params"
+  pattern: string, // Wouter-compatible pattern, e.g. `/blog/:slug`
+  params: Params,
   is404: boolean,
-  /** True if this route has any dynamic segments */
+
   isDynamic: boolean,
-  /** True if this route are internal */
   isInternal: boolean,
 }
 

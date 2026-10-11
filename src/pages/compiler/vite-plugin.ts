@@ -23,6 +23,7 @@ import type {
 } from 'vite'
 import type { Metadata, PluginOptions } from './types'
 import { _pages, _root } from '@/utils'
+import { cp } from 'node:fs/promises'
 
 const VIRTUAL_ID = ':duto'
 const RESOLVED_ID = '\0'+ VIRTUAL_ID
@@ -219,10 +220,15 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
 
           if (file.type === 'asset' && file?.originalFileName?.endsWith('duto/pages/client/app.tsx'))
             file.source += 'i-i{display:contents}'
-            // file.source += 'd-b,d-p,i-d,i-s,i-i{display:contents}'
 
           if (file.type === 'asset' && file.fileName.endsWith('.css')) {
             setAsset(resolveImport(file.originalFileName as string, metadata.root, metadata.aliases), '/'+ file.fileName)
+
+            const css = typeof file.source === 'string'
+              ? file.source
+              : Buffer.from(file.source).toString('utf-8')
+
+            file.source = css.replace(/\/\*!\s*tailwindcss[^*]*\*\/\s*/g, '')
             continue
           }
 
@@ -235,35 +241,6 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
 
     },
 
-    // {
-    //   name: 'duto:routes-inject',
-    //   enforce: 'post',
-    //   generateBundle(_, bundle) {
-    //     // monta o mapa a partir dos inputs de metadata.routes
-    //     const routeMap: Record<string, string> = {}
-    //     for (const r of metadata.routes) {
-    //       if (r.is404) continue
-    //       // encontra o chunk cujo facadeModuleId bate com r.fullFilePath
-    //       for (const [fileName, chunk] of Object.entries(bundle)) {
-    //         if (chunk.type === 'chunk' && chunk.facadeModuleId === r.fullFilePath) {
-    //           routeMap[r.path] = fileName
-    //           break
-    //         }
-    //       }
-    //     }
-
-    //     // injeta no chunk do app
-    //     for (const chunk of Object.values(bundle)) {
-    //       if (chunk.type !== 'chunk') continue
-    //       if (chunk.facadeModuleId?.includes('app.tsx') || chunk.code.includes('__DUTO_ROUTES__')) {
-    //         chunk.code = chunk.code.replace(
-    //           '__DUTO_ROUTES__',
-    //           JSON.stringify(routeMap)
-    //         )
-    //       }
-    //     }
-    //   }
-    // },
     {
       name: 'duto:build',
       enforce: 'pre',
@@ -306,13 +283,26 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
         // await server.close()
 
         const outPath = join(config.root, config.build.outDir)
+
+        await cp(join(config.root, 'public'), outPath, { recursive: true, force: true })
+
         const entry = Bun.file(join(outPath, getChunk(':duto/client/app.tsx')))
-        let entryContent = await entry.text()
+        if (await entry.exists()) {
+          let entryContent = await entry.text()
 
-        for (const r of metadata.routes.filter(r => !r.is404))
-          entryContent = entryContent.replace(r.fullFilePath, getChunk(r.fullFilePath.replace(config.root, '')))
+          for (const r of metadata.routes.filter(r => !r.is404)) {
+            const rPath = getChunk(r.fullFilePath.replace(config.root, ''))
 
-        await entry.write(entryContent)
+            if (r.props) {
+              const rFile = Bun.file(join(outPath, rPath))
+              await rFile.write((await rFile.text()).replace('}export{', `}export const props=${JSJSON(r.props)};export{`))
+            }
+
+            entryContent = entryContent.replace(r.fullFilePath, rPath)
+          }
+
+          await entry.write(entryContent)
+        }
 
         // i18n
         for (const locale of metadata.i18n.locales) {
@@ -328,6 +318,7 @@ export function plugin(options: PluginOptions = {}): PluginOption[] {
             )
           }
         }
+
       },
 
       // TODO: precisa ser aqui mesmo pois se a pagina for importada no entry, pode incluir codigo nao usado no chunck/bundle

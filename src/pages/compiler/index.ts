@@ -7,10 +7,9 @@ import { h } from 'preact'
 import { render } from 'preact-render-to-string'
 import minify from '@minify-html/node'
 
-import { JSJSON } from 't0n'
 import { DOCTYPE_RE } from './constants'
 import { getAsset, getChunk } from './assets'
-import { getLayouts, resolveStaticOutputPath } from './meta'
+import { resolveStaticOutputPath } from './meta'
 import { setLocale } from '../i18n/client'
 
 import type { ResolvedConfig } from 'vite'
@@ -26,13 +25,14 @@ export async function renderPage(
  ) {
   const {
     mod,
+    layouts,
     hasGetProps, hasGetStaticProps,
-    isClientOnly,
+    useClient,
   } = page
   if (!mod?.default)
     return console.warn(`No default export in ${page.filePath} — skipping`)
 
-  if (page.isInternal || page.is404 || (page.isDynamic && !hasGetStaticProps))
+  if (page.isInternal || (!page.useRaw && !page.useHtml && page.is404) || (page.isDynamic && !hasGetStaticProps))
     return meta.summary.set('/'+ page.fileName, { type: 2, path: '/'+ page.fileName, size: 0, sizeBr: 0, sizeJS: 0 })
 
   const { filePath, pattern, params } = page
@@ -70,32 +70,42 @@ export async function renderPage(
     props.push({ routeParams: {}, pageProps: {} })
   }
 
-  const layouts = await getLayouts(meta, page.filePath)
-
+  const sProps = []
   for (const prop of props) {
     const allProps = { ...prop.pageProps, ...prop.routeParams }
+    Object.keys(allProps).length && sProps.push(allProps)
 
     // @ts-ignore
-    allProps?.locale && setLocale(allProps?.locale || meta.i18n.fallbackLocale)
+    allProps?.locale && await setLocale(allProps?.locale || meta.i18n.fallbackLocale)
 
     const pathname = resolveStaticOutputPath(page, prop.routeParams)
+
+    // Shims
     // TODO: melhorar isso para impedir erros do wouter e afins
     // @ts-ignore
     global.location = { pathname: '/'+ (pathname === 'index' ? '' : pathname) }
+    global.location.href = global.location.pathname
     // @ts-ignore
-    global.window = { $duto: {
-      sroutes: meta.spages,
-      navigate: {},
-      route: { pattern: page.pattern, params: prop.routeParams, path: global.location.pathname },
-    } }
+    global.window = {
+      location: global.location,
+      $duto: {
+        navigate: {},
+        route: { pattern: page.pattern, params: prop.routeParams, path: global.location.pathname },
+      }
+    }
 
     let html = ''
 
-    // if (!isClientOnly) { // TODO: fazer funcionar com `use client`
+    if (!useClient) {
       try {
         let el = h(mod.default, allProps as any)
         for (const layout of layouts)
           el = h(layout.mod.default, null, el)
+
+        // @ts-ignore
+        const shell = mod?.Html || mod?.html || mod?.HTML
+        // @ts-ignore
+        if (shell) el = h(shell, allProps, el)
 
         html = render(el)
       } catch (e) {
@@ -103,9 +113,9 @@ export async function renderPage(
         console.warn(e)
         html = ''
       }
-    // }
+    }
 
-    html = buildHtml(html, Object.keys(allProps).length ? allProps : undefined)
+    html = buildHtml(page, html, Object.keys(allProps).length ? allProps : undefined)
 
     const outFile = join(config.root, config.build.outDir, pathname +'.html')
     const outHTML = meta.minify ? minify.minify(Buffer.from(html), {}) : html
@@ -144,16 +154,22 @@ export async function renderPage(
         sizeJS: 0,
       })
     }
-
   }
+
+  if (sProps.length)
+    page.props = sProps.length < 2 ? sProps[0] : sProps
 }
 
 function buildHtml(
+  page: IRoute,
   html: string,
-  props?: StaticProps,
+  props: StaticProps = {},
 ): string {
+  if (page.useRaw) return html
   if (!(html.includes('<body') || html.includes('<html') || html.includes('<head')))
     html = wrapHtml(html)
+  else
+    html = html.replace('<body', '<body hidden')
 
   if (!DOCTYPE_RE.test(html))
     html = '<!DOCTYPE html>'+ html
@@ -164,7 +180,8 @@ function buildHtml(
 
   const prepend = assets.map(asset => {
     const href = getAsset(asset)
-    return href ? `<link href="${href}" rel=stylesheet>` : null
+    // return href ? `<link rel="stylesheet" href="${href}">` : null
+    return href ? `<link rel="preload" href="${href}" as="style" onload="this.rel='stylesheet'">` : null
   }).filter(Boolean).join('')
 
   if (html.includes('</head>')) {
@@ -175,9 +192,13 @@ function buildHtml(
     html = prepend + html
   }
 
-  const append = (props ? `<script>(self.$duto=self.$duto||{}).props=${JSJSON(props)}</script>` : '') + assets.map(file => {
+  if (page.useHtml) props.__raw = true
+
+  // const append = (Object.keys(props).length ? `<script>(self.$duto=self.$duto||{}).props=${JSJSON(props)}</script>` : '') + assets.map(file => {
+  const append = assets.map(file => {
     const src = getChunk(file)
-    return src ? `<script src="${src}" type=module></script>` : null
+    return src ? `<script type=module src="${src}"></script>` : null
+    // return src ? `<script type=module src="${src}"${(Object.keys(props).length ? ` props='${JSON.stringify(props)}'` : '')}></script>` : null
   }).filter(Boolean).join('')
 
   if (html.includes('</body>'))

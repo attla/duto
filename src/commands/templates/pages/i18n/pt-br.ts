@@ -5,6 +5,9 @@ export default {
     notfound: 'pagina-desconhecida',
   },
   messages: {
+    auto: 'Padrão do sistema',
+    dark: 'Escuro',
+    light: 'Claro',
     title: 'Bem-vindo ao Duto',
     description: 'Um framework rápido e leve que mantém as coisas simples!',
     gotodocs: 'Documentação',
@@ -13,5 +16,8 @@ export default {
     backhome: 'Ir para página inicial',
     about: 'Sobre',
     shop: 'Loja',
+
+    blog: 'Blog',
+    b1: 'Esta página também é estática, os dados foram carregados via',
   },
 }

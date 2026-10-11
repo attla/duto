@@ -8,7 +8,7 @@ import config from '#/compiler/vite-plugin'
 import { _root } from '@/utils'
 import { match, match404 } from '#/compiler/routes'
 import type { Metadata, PluginOptions } from '#/compiler/types'
-import { EXTENSIONS_LIST } from '#/compiler/constants'
+import { EXTENSIONS_LIST, NF_NAMES } from '#/compiler/constants'
 
 export async function getConfig(name = 'config'): Promise<UserConfig & PluginOptions> {
   let opts = {} as UserConfig
@@ -85,17 +85,20 @@ export function preview(
           res = new Response(file)
         } else {
           matched = match(path)
-          route = matched?.name || match404(meta, path)
+          const r404 = match404(meta, path) || '404'
+          route = matched?.name || r404
           res = new Response(null, { status: 404 })
 
           for (const asset of [
             path,
             join(path, 'index'),
+            r404,
             'index',
           ]) {
             file = Bun.file(join(_root, dist, asset +'.html'))
 
             if (await file.exists()) {
+              NF_NAMES.includes(asset.split('/').pop()!) && (route = r404)
               res = new Response(file)
               break
             }

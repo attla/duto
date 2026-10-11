@@ -1,19 +1,122 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  * {@apply border-border}
+  /* body {@apply bg-background text-foreground} */
+}
+
+@utility s {
+  @apply w-[--value] h-[--value];
+}
+
+@variant children (& > *);
+
+
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla",
+    sans-serif;
+  --font-mono:
+    ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --font-serif:
+    Georgia, Garamond, Cambria, "Times New Roman", Times, ui-serif, serif;
+
+  --font-pixel: PixAntiqua, ui-sans-serif, system-ui, sans-serif;
+  /* Medium headers*/
+  /* sohne, "Helvetica Neue", Helvetica, Arial, sans-serif; */
+
+  --color-black: #0D0F14;
+  --color-white: #fff;
+  --color-text: #F041FF;
+
+  --color-accent: var(--color-gray-100);
+  /* --color-primary: #3F224D; */
+  --color-muted: #545864;
+
+  --color-border: var(--color-gray-200);
+  --color-grid: #e5e5e5;
+
+  --color-blue: #3245FF;
+  --color-purple: #BC52EE;
+  --color-purple-dark: #3F224D;
+  --color-red: #D83333;
+  --color-pink: #F041FF;
+  --color-pink-light: #E8C4F9;
+  --color-orange: #F8E42E;
+  --color-yellow: #FF7D54;
+  --color-hover: #E8C4F9;
+  --color-green: #4AF2C8;
+
+  --color-dark-100: #858B98;
+  --color-dark-300: #343841;
+  --color-dark-400: #18191E;
+  --color-dark-500: #4B4B4B;
+  --color-dark-600: #2C2C2C;
+  --color-dark-700: #11172A;
+  --color-dark-800: #0C0F19;
+  --color-dark-900: #060913;
+
+
+  --sky-grad-1: rgb(2, 132, 199);
+  --sky-grad-2: rgb(14, 165, 233);
+  --sky-grad-3: rgb(56, 189, 248);
+}
+
+.dark {
+  --color-white: #F2F6FA;
+
+  --color-accent: #17191E;
+  --color-primary: #BC52EE;
+  --color-muted: #BFC1C9;
+
+  --color-border: color-mix(in oklab, var(--color-gray-100) 10%, transparent);
+
+
+  --sky-grad-1: rgb(112, 209, 255);
+  --sky-grad-2: rgb(173, 228, 255);
+  --sky-grad-3: rgb(219, 243, 255);
+}
+
+/* App styles */
+
 html, body {
-  @apply overscroll-none
+  @apply overscroll-y-none;
+  /* font-size-adjust: ex-height 0.5; */
+
+  /* Standardize line height across different system fonts */
+  /* line-height: 1.5; */
+  /* Consider setting letter-spacing for more consistent text blocks */
+  /* letter-spacing: 0.01em; */
+
+  /* Advanced font metric overrides (modern browsers only) */
+  /* ascent-override: 90%;
+  descent-override: 25%;
+  line-gap-override: 0%; */
 }
 
-.text-mono {
-  font-family: ui-monospace,SFMono-Regular,monospace;
-  --tw-font-weight: 300;
-  font-weight: 300
+.text-sky-gradient,
+.group-hover\:text-sky-gradient:is(:where(.group):hover *),
+.hover\:text-sky-gradient:hover {
+  @apply bg-clip-text text-transparent;
+  background-image: radial-gradient(
+    138.06% 1036.51% at 95.25% -2.54%,
+    var(--sky-grad-1) 14.06%,
+    var(--sky-grad-2) 51.02%,
+    var(--sky-grad-3) 79.09%
+  );
 }
 
-.text-sky-gratient {
+/* .text-sky-gradient,
+.group-hover\:text-sky-gradient:is(:where(.group):hover *),
+.hover\:text-sky-gradient:hover
+{
   @apply bg-clip-text text-transparent;
   background-image: radial-gradient(138.06% 1036.51% at 95.25% -2.54%, rgb(112, 209, 255) 14.06%, rgb(173, 228, 255) 51.02%, rgb(219, 243, 255) 79.09%);
-}
+} */
 
 .title {
   @apply text-4xl lg:text-[3.5rem] leading-[1.1] font-semibold tracking-tight text-balance
