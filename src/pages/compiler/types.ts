@@ -3,7 +3,6 @@ import type { Platform } from '$/cli/types'
 
 export type PluginOptions = {
   root?: string,
-  // Directory to scan for pages, relative to Vite root. Default: "./pages"
   pagesDir?: string,
 }
 

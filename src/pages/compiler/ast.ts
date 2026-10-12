@@ -1,6 +1,19 @@
 import { resolve } from 'node:path'
 import { resolveAlias } from './aliases'
 
+const IMPORT_RE = /(?:\/\/[^\n]*|\/\*[\s\S]*?\*\/)|import\s*(?:type\s*)?(?:[^'"]*?from\s*)?['"]([^'"]+)['"]/g
+export function getImports(str: string) {
+  const found: string[] = []
+  let match: RegExpExecArray | null
+  while ((match = IMPORT_RE.exec(str))) {
+    if (match[0].includes('import type') || !match[1]) continue
+
+    found.push(match[1])
+  }
+
+  return found
+}
+
 const resolveImportCache = new Map<string, string>()
 export const resolveImport = (lib: string, importer: string, aliases: Record<string, string>) => {
   if (resolveImportCache.has(lib))

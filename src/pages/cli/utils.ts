@@ -1,17 +1,16 @@
 import { IMPORT, Datte } from 't0n'
 import { join } from 'pathe'
 import { gray, green, yellow, red, cyan } from 't0n/color'
-import type { UserConfig } from 'vite'
 
 import { resolveExtension } from '#/compiler/file'
-import config from '#/compiler/vite-plugin'
+import config, { type DutoOptions } from '#/compiler/bun-plugin'
 import { _root } from '@/utils'
 import { match, match404 } from '#/compiler/routes'
 import type { Metadata, PluginOptions } from '#/compiler/types'
 import { EXTENSIONS_LIST, NF_NAMES } from '#/compiler/constants'
 
-export async function getConfig(name = 'config'): Promise<UserConfig & PluginOptions> {
-  let opts = {} as UserConfig
+export async function getConfig(name = 'config'): Promise<DutoOptions> {
+  let opts = {} as DutoOptions
   const file = resolveExtension(name)
   if (file) opts = await IMPORT(join(_root, file), 'default')
   return config(opts)

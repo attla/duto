@@ -12,15 +12,15 @@ import { getAsset, getChunk } from './assets'
 import { resolveStaticOutputPath } from './meta'
 import { setLocale } from '../i18n/client'
 
-import type { ResolvedConfig } from 'vite'
 import type { IRoute, Metadata, RouteParams, StaticProps, SummaryMetadata } from './types'
+import type { DutoOptions } from './bun-plugin'
 
 
 const brCompress = promisify(brotliCompress)
 
 export async function renderPage(
   meta: Metadata,
-  config: ResolvedConfig,
+  config: DutoOptions,
   page: IRoute
  ) {
   const {
@@ -117,7 +117,7 @@ export async function renderPage(
 
     html = buildHtml(page, html, Object.keys(allProps).length ? allProps : undefined)
 
-    const outFile = join(config.root, config.build.outDir, pathname +'.html')
+    const outFile = join(config.root, config.outDir, pathname +'.html')
     const outHTML = meta.minify ? minify.minify(Buffer.from(html), {}) : html
     await mkdir(dirname(outFile), {recursive: true})
     await Bun.write(outFile, outHTML)
