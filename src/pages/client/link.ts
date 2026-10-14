@@ -1,7 +1,10 @@
-self.addEventListener('d:navigate', e => {
+import { local } from '#/client/storage'
+import { route } from '../i18n/client'
+
+addEventListener('d:navigate', e => {
   const el = (e as CustomEvent<HTMLAnchorElement>).detail
 
-  console.warn('d:navigate', el)
+  console.warn('d:navigate', el) // @ts-ignore
   if (el.href) self.$duto.navigate?.(el.href)
 })
 
@@ -16,14 +19,35 @@ export default class Link extends HTMLAnchorElement {
     'ping',
     'type',
   ]
+  #unsubscribe: (() => void) | null = null
+  #href: string | null = null
 
   constructor() {
     super()
     this.addEventListener('click', this.#onClick)
   }
 
+  connectedCallback() {
+    this.#href = this.getAttribute('href') // @ts-ignore
+    this.#unsubscribe = local.subscribe('lang', e => this.build(e?.val))
+
+    document.readyState === 'interactive' || document.readyState === 'complete'
+      ? this.build()
+      : setTimeout(this.build, 0)
+  }
+
   disconnectedCallback() {
     this.removeEventListener('click', this.#onClick)
+    if (this.#unsubscribe) {
+      this.#unsubscribe?.()
+      this.#unsubscribe = null
+    }
+  }
+
+  build(val?: string) {
+    const href = this.#href
+    if (!href || href.charCodeAt(0) === 47 || href.startsWith('http')) return
+    this.setAttribute('href', route(href, val))
   }
 
   #onClick = (e: MouseEvent) => {

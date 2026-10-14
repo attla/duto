@@ -111,6 +111,13 @@ export async function build(opts: DutoOptions) {
             return { path: Bun.resolveSync(target, conf.root) }
           })
 
+          build.onResolve({ filter: /^\/(?!\/)/ }, args => {
+            const fromCss = args.kind === 'url-token' || args.importer?.endsWith('.css')
+            if (!fromCss || (existsSync(args.path) && !existsSync(join(conf.root, 'public', args.path)))) return
+
+            return { path: args.path, external: true }
+          })
+
           build.onResolve({ filter: /^:root/ }, args => {
             for (const f of CSS_CANDIDATES) {
               const path = join(conf.root, f)

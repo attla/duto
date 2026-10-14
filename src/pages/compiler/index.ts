@@ -14,6 +14,7 @@ import { setLocale } from '../i18n/client'
 
 import type { IRoute, Metadata, RouteParams, StaticProps, SummaryMetadata } from './types'
 import type { DutoOptions } from './bun-plugin'
+import { warn } from 't0n/log'
 
 
 const brCompress = promisify(brotliCompress)
@@ -30,7 +31,7 @@ export async function renderPage(
     useClient,
   } = page
   if (!mod?.default)
-    return console.warn(`No default export in ${page.filePath} — skipping`)
+    return warn(`No default export in ${page.filePath} — skipped`)
 
   if (page.isInternal || (!page.useRaw && !page.useHtml && page.is404) || (page.isDynamic && !hasGetStaticProps))
     return meta.summary.set('/'+ page.fileName, { type: 2, path: '/'+ page.fileName, size: 0, sizeBr: 0, sizeJS: 0 })

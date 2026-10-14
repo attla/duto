@@ -8,6 +8,8 @@ interface IStoreChange<TValue> {
 
 export type IStoreListener<TValue> = (change: IStoreChange<TValue>) => void
 
+const eventPrefix = 's:'
+const $emit = <D = unknown>(event: string, detail?: D) => emit(eventPrefix + event, detail)
 /**
  * Store reativo que encapsula o localStorage.
  *
@@ -26,7 +28,7 @@ class LocalStore<TSchema extends Record<string, unknown>> extends EventTarget {
     this.#prefix = prefix
 
     if (typeof window !== 'undefined')
-      window.addEventListener('storage', this.#onCrossTabChange)
+      addEventListener('storage', this.#onCrossTabChange)
   }
 
   #buildKey<K extends keyof TSchema & string>(key: K): string {
@@ -55,7 +57,7 @@ class LocalStore<TSchema extends Record<string, unknown>> extends EventTarget {
     const val = this.#parse<TSchema[keyof TSchema]>(e.newValue)
     const old = this.#parse<TSchema[keyof TSchema]>(e.oldValue)
 
-    emit(key, { key, val, old })
+    $emit(key, { key, val, old })
   }
 
   get<K extends keyof TSchema & string>(key: K): TSchema[K] | null {
@@ -70,7 +72,7 @@ class LocalStore<TSchema extends Record<string, unknown>> extends EventTarget {
     const old = this.get(key)
     window?.localStorage?.setItem(this.#buildKey(key), JSON.stringify(val))
 
-    emit(key, { key, val, old })
+    $emit(key, { key, val, old })
   }
 
   remove<K extends keyof TSchema & string>(key: K): void {
@@ -78,14 +80,14 @@ class LocalStore<TSchema extends Record<string, unknown>> extends EventTarget {
 
     const old = this.get(key)
     window?.localStorage?.removeItem(this.#buildKey(key))
-    emit(key, { key, val: null, old })
+    $emit(key, { key, val: null, old })
   }
 
   subscribe<K extends keyof TSchema & string>(
     key: K,
     listener: IStoreListener<TSchema[K]>,
   ) {
-    return on(key, listener)
+    return on(eventPrefix + key, listener)
   }
 }
 

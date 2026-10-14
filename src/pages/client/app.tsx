@@ -20,7 +20,7 @@ import i18n, {
   detect, isPrefixed,
   getLocale, setLocale,
   cache, cached,
-  r, redirect,
+  redirect,
   route,
   d, t, tl,
   updatePickers,
@@ -62,7 +62,7 @@ import ':root/styles'
 // @ts-ignore
 self.$duto = self.$duto || {}
 // @ts-ignore
-Object.assign(self.$duto, {
+Object.assign($duto, {
   // props,
   // location: '/',
   // navigate: {},
@@ -73,7 +73,7 @@ Object.assign(self.$duto, {
     detect, isPrefixed,
     getLocale, setLocale,
     cache, cached,
-    r, redirect,
+    redirect,
     route,
     d, t, tl,
   },
@@ -113,9 +113,9 @@ async function resolveRoute(
   }
 
   // @ts-ignore
-  // const sProps = self.$duto?.props
+  // const sProps = $duto?.props
   // if (sProps && typeof sProps === 'object') { // @ts-ignore
-  //   self.$duto.props = null
+  //   $duto.props = null
   //   Object.assign(props, sProps)
   // } else
 
@@ -165,13 +165,13 @@ function View({ view, params }: { view: View, params: Record<string, string>}) {
 
   useLayoutEffect(() => {
     let cancelled = false
-    self.$duto.route = { pattern: view[0], params: clean, path: location.pathname }
+    $duto.route = { pattern: view[0], params: clean, path: location.pathname }
 
     load(view, clean).then(el => {
       if (cancelled) return
       last = el
       setLoaded(el)
-      // self.dispatchEvent(new CustomEvent('d:load'))
+      // dispatchEvent(new CustomEvent('d:load'))
     })
     return () => { cancelled = true }
   }, [key])
@@ -198,23 +198,25 @@ while (document.body.firstChild)
 
 render(<Router aroundNav={aroundNav}>
   {h(() => {
+    if ($duto?.location) return
     document.body.removeAttribute('hidden')
 
     const [location, navigate] = useLocation()
-    self.$duto.location = location
-    self.$duto.navigate = (to,options) => {
-      to = new URL(to).pathname
+    $duto.location = location
+    $duto.navigate = (to, options) => {
+      // console.log(to, options)
+      // to = new URL(to).pathname
       navigate(to, options)
     }
-    self.$duto.params = useParams()
+    $duto.params = useParams()
 
     const [search, setSearch] = useSearchParams()
-    self.$duto.search = search
-    self.$duto.setSearch = setSearch
+    $duto.search = search
+    $duto.setSearch = setSearch
 
     updatePickers()
-    self.dispatchEvent(new CustomEvent('d:load'))
-  }, null)}
+    dispatchEvent(new CustomEvent('d:load'))
+  })}
   <Switch>
     {views.map(v => (
       <Route key={v[0]} path={v[0]}>

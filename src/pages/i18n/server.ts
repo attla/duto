@@ -1,8 +1,8 @@
 import { join } from 'node:path'
+import { existsSync } from 'node:fs'
 import { IMPORT, JSJSON } from 't0n'
 
 import type { Metadata, I18nMetadata } from '#/compiler/types'
-import { existsSync } from 'node:fs'
 
 export default async function getI18n(meta: Metadata) {
   let file = ''
@@ -66,6 +66,5 @@ export const pageRoutes = ${JSJSON(i18n.pageRoutes)}
 export const options = ${JSJSON(mod.options)}
 `
 
-  // console.error(i18n.string)
   return i18n
 }

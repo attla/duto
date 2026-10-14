@@ -1,5 +1,18 @@
 import { h, type JSX } from 'preact'
+import { on, emit } from 't0n'
 import { local } from '#/client/storage'
+
+
+const sync = async () => {
+  _locale = getLocale()
+  await loadLang(_locale)
+  emit('s:lang')
+}
+
+on('popstate', sync)
+on('pushState', sync)
+on('replaceState', sync)
+on('hashchange', sync)
 
 const accepted = (lang: string | undefined, locales: string[] = [], fallback: string) => lang && locales.includes(lang) ? lang : fallback
 
@@ -113,9 +126,6 @@ export default async function i18n(
   _locale = typeof window === 'undefined' ? fallbackLocale : getLocale()
 
   await loadLang(_locale)
-
-  // console.error(routes)
-  // console.error(routeMap)
 }
 
 export const cache = (val: string) => local.set('lang', accepted(val, _locales, ''))
@@ -140,18 +150,20 @@ export const updatePickers = (lang?: string) => {
   })
 }
 
-export const route = (route = '', lang?: string) => {
+export const route = (key = '', lang?: string) => {
   lang ??= accepted(lang, _locales, _locale)
-  const path = _routeMap[route]
-  return _routes[lang][path ? path : route] || _routes[lang]?.notfound || undefined
+  const path = _routeMap[key]
+
+  return key
+    ? '/'+ lang +'/'+ (_routes[lang][path ? path : key] || _routes[lang]?.notfound || '')
+    : '/'+ lang
 }
 
-export const redirect = (key = '', lang?: string) => r(key, lang)
-export const r = (key: string, lang?: string) => {
+export const redirect = (key = '', lang?: string) => {
   lang ??= accepted(lang, _locales, _locale)
-  const path = '/'+ lang + (key ? '/'+ route(key, lang) : '')
+  const path = route(key, lang)
 
-  if (!location.pathname.endsWith(path))
+  if (!location.pathname.endsWith(path)) // @ts-ignore
     self.$duto?.navigate(path)
 
   // return '/' + lang + '/' + (key in _routes[lang] ? _routes[lang][key] : key)
@@ -165,101 +177,113 @@ export const r = (key: string, lang?: string) => {
 // }
 
 ////////////////////////////////////////////////////////////////////////////////
-
 type Primitives = string | number | boolean
-
-type TFunc = {
-  (key: string, lang?: string): string
-  (key: string, params: Record<string, Primitives>, lang?: string): string
-  (key: string, params: Primitives[], lang?: string): string
-  (strings: TemplateStringsArray, ...values: Primitives[]): string & JSX.Element
-  (props: TProps): JSX.Element
-}
+type Params = Record<string, Primitives> | Primitives[]
+type Hybrid = string & JSX.Element
 
 type TProps = {
   s?: string
   children?: string
   lang?: string
-  params?: Record<string, Primitives> | Primitives[]
+  params?: Params
+}
+
+type TFunc = {
+  (key: string, lang?: string): Hybrid
+  (key: string, params: Record<string, Primitives>, lang?: string): Hybrid
+  (key: string, params: Primitives[], lang?: string): Hybrid
+  (strings: TemplateStringsArray, ...values: Primitives[]): Hybrid
+  (props: TProps): Hybrid
+}
+type TStrFunc = {
+  (key: string, lang?: string): string
+  (key: string, params: Record<string, Primitives>, lang?: string): string
+  (key: string, params: Primitives[], lang?: string): string
 }
 
 const lookup = (key: string, lang: string): string => {
   if (!key) return ''
   if (key.startsWith('_')) return key.replace(/^_+/, '')
+
   const msg = _messages[lang] ?? _messages[_locale]
   return (msg && key in msg ? msg[key] : key) as string
 }
 
-const interpolate = (template: string, params: Record<string, Primitives> | Primitives[]): string => {
-  if (Array.isArray(params))
-    return template.replace(/\{(\d+)\}/g, (_, i) => String(params[Number(i)] ?? `{${i}}`))
+// Um único regex serve para objeto ({name}) e array ({0}), já que arr['0'] === arr[0]
+const interpolate = (template: string, params?: Params): string =>
+  params
+    ? template.replace(/\{(\w+)\}/g, (_, k: string) =>
+        String((params as Record<string, Primitives>)[k] ?? `{${k}}`))
+    : template
 
-  return template.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`))
-}
-
+// t`Olá ${name}` -> 'Olá %0%'
 const taggedKey = (strings: TemplateStringsArray, values: Primitives[]): string =>
-  strings.reduce((acc, s, i) => acc + s + (values[i] !== undefined ? `%${i}%` : ''), '');
+  strings.reduce((acc, s, i) => acc + s + (i < values.length ? `%${i}%` : ''), '')
 
-const resolveTagged = (strings: TemplateStringsArray, values: Primitives[], lang: string): string => {
-  const template = lookup(taggedKey(strings, values), lang)
-  return values.reduce((acc, val, i) => acc.replace(`%${i}%`, String(val)), template)
-}
+const resolveTagged = (strings: TemplateStringsArray, values: Primitives[], lang: string): string =>
+  lookup(taggedKey(strings, values), lang)
+    .replace(/%(\d+)%/g, (_, i: string) => String(values[Number(i)]))
 
-// --- VNode que se comporta como string em qualquer coerção ---
-const hybridNode = (key: string, resolved: string, lang?: string, params?: TProps['params']) => {
-  const attrs: Record<string, string> = { s: key, children: resolved }
+// VNode que se comporta como string em qualquer coerção
+const hybridNode = (key: string, text: string, lang?: string, params?: Params): Hybrid => {
+  const attrs: Record<string, string> = { s: key, children: text }
   if (lang) attrs.lang = lang
   if (params) attrs.params = JSON.stringify(params)
 
-  const vnode = h('i-i', attrs) as unknown as Record<string | symbol, unknown>
+  const toText = { value: () => text }
 
-  const _attrs = { value: () => resolved, enumerable: false }
-  Object.defineProperty(vnode, 'toString', _attrs)
-  Object.defineProperty(vnode, 'valueOf', _attrs)
-  vnode[Symbol.toPrimitive] = () => resolved
-
-  return vnode as unknown as string & JSX.Element
+  return Object.defineProperties(h('i-i', attrs), {
+    toString: toText,
+    valueOf: toText,
+    [Symbol.toPrimitive]: toText,
+  }) as unknown as Hybrid
 }
 
-const isJSXProps = (val: unknown): val is TProps =>
-  typeof val === 'object' && val !== null && !Array.isArray(val) && !('raw' in val)
+const parseArgs = (rest: unknown[]): { params?: Params; lang?: string } => {
+  const [a, b] = rest
 
-export const t = ((first: string | TemplateStringsArray | TProps, ...rest: unknown[]): unknown => {
+  return {
+    params: a && typeof a === 'object' ? (a as Params) : undefined,
+    lang: [b, a].find((v): v is string => typeof v === 'string'),
+  }
+}
 
-  // --- JSX: <t s='home' /> ou <t>home</t> ---
-  if (isJSXProps(first)) {
-    const { s, children, lang, params } = first;
-    const key = s ?? children ?? '';
-    const resolved = params
-      ? interpolate(lookup(key, lang ?? _locale), params)
-      : lookup(key, lang ?? _locale);
+const translate = (key: string, params?: Params, lang?: string): string =>
+  interpolate(lookup(key, lang ?? _locale), params)
 
-    return hybridNode(key, resolved, lang, params)
+const render = (key: string, params?: Params, lang?: string): Hybrid =>
+  hybridNode(key, translate(key, params, lang), lang, params)
+
+// $t('key'), $t('key', lang), $t('key', params), $t('key', params, lang)
+export const $ = ((key: string, ...rest: unknown[]): string => {
+  const { params, lang } = parseArgs(rest)
+  return translate(key, params, lang)
+}) as TStrFunc
+
+export const t = ((first: string | TemplateStringsArray | TProps, ...rest: unknown[]): Hybrid => {
+  // t`home` ou t`Bem-vindo ${name}`
+  if (Array.isArray(first)) {
+    const strings = first as unknown as TemplateStringsArray
+    const values = rest as Primitives[]
+
+    return hybridNode(taggedKey(strings, values), resolveTagged(strings, values, _locale))
   }
 
-  // --- Tagged template: t`home` ou t`Bem-vindo ${name}` ---
-  if (Array.isArray(first) && 'raw' in first) {
-    const strings = first as TemplateStringsArray;
-    const values = rest as Primitives[];
-    const key = taggedKey(strings, values);
-    const resolved = resolveTagged(strings, values, _locale);
+  // <t s='home' /> ou <t>home</t>
+  if (typeof first === 'object') {
+    const { s, children, lang, params } = first as TProps
 
-    return hybridNode(key, resolved);
+    return render(s ?? children ?? '', params, lang)
   }
 
-  // --- Chamada normal: t('key', ...) ---
-  const key = first as string;
-  const lang = () => typeof rest[rest.length - 1] === 'string' ? rest[rest.length - 1] as string : _locale;
-
-  if (typeof rest[0] === 'object' && rest[0] !== null)
-    return interpolate(lookup(key, lang()), rest[0] as Record<string, Primitives> | Primitives[]);
-
-  return lookup(key, rest[0] && typeof rest[0] === 'string' ? rest[0] : _locale)
+  // t('key'), t('key', lang), t('key', params), t('key', params, lang)
+  const { params, lang } = parseArgs(rest)
+  return render(first, params, lang)
 }) as TFunc
 
 export const tl = (lang: string) =>
   (strings: TemplateStringsArray, ...values: Primitives[]): string =>
-    resolveTagged(strings, values, lang);
+    resolveTagged(strings, values, lang)
 ////////////////////////////////////////////////////////////////////////////////
 
 // export const t = (key: string, lang?: string) => {

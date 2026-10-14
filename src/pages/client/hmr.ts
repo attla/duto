@@ -9,5 +9,5 @@ const connect = () => {
 const reconect = () => (!hmr || hmr?.readyState === WebSocket.CLOSED) && location.reload()
 connect()
 document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && reconect())
-window.addEventListener('focus', reconect)
-window.addEventListener('pageshow', reconect)
+addEventListener('focus', reconect)
+addEventListener('pageshow', reconect)

@@ -1,7 +1,8 @@
+import { on } from 't0n'
 import { useSignal } from '@preact/signals'
-import { options } from '@/i18n'
-import { local, getLocale, setLocale, isPrefixed, r } from 'duto'
 import { useLayoutEffect } from 'preact/hooks'
+import { local, getLocale, setLocale, isPrefixed, redirect } from 'duto'
+import { options } from '@/i18n'
 
 import Select from './select'
 
@@ -13,21 +14,22 @@ function Languages(props: any) {
 export default function LocaleSelect({ class: className = '' }) {
   const localeOptions = Object.entries(options).map(([value, label]) => ({ label, value }))
   const selectedValue = useSignal(getLocale())
-  let unsubscribe: (() => void) | null = null
+  const unsubscribe: (() => void)[] = []
   const handle = (e: any, lang?: string) => {
     lang ??= getLocale()
     selectedValue.value = lang
   }
 
   useLayoutEffect(() => {
-    unsubscribe = local.subscribe('lang', e => !isPrefixed() && handle(null, e.val as string))
     const lang = getLocale()
     selectedValue.value = lang
+    !unsubscribe.length && unsubscribe.push(
+      local.subscribe('lang', e => !isPrefixed() && handle(null, e?.val as string)),
+      on('popstate', handle),
+    )
 
-    window.addEventListener('popstate', handle)
     return () => {
-      window.removeEventListener('popstate', handle)
-      unsubscribe?.()
+      unsubscribe.forEach(unsub => unsub?.())
     }
   }, [])
 
@@ -36,7 +38,7 @@ export default function LocaleSelect({ class: className = '' }) {
     if (target) {
       await setLocale(target.value)
       selectedValue.value = target.value
-      isPrefixed() && r((window?.location?.pathname || '').split('/').filter(Boolean).slice(1).join('/'), target.value)
+      isPrefixed() && redirect((window?.location?.pathname || '').split('/').filter(Boolean).slice(1).join('/'), target.value)
     }
   }
 
