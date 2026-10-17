@@ -1,13 +1,14 @@
 import { IMPORT, Datte } from 't0n'
 import { join } from 'pathe'
-import { gray, green, yellow, red, cyan } from 't0n/color'
+import { gray, green, yellow, red, cyan, dim } from 't0n/color'
 
 import { resolveExtension } from '#/compiler/file'
-import config, { type DutoOptions } from '#/compiler/bun-plugin'
+import config from '#/compiler/bun-plugin'
 import { _root } from '@/utils'
 import { match, match404 } from '#/compiler/routes'
-import type { Metadata, PluginOptions } from '#/compiler/types'
+import type { DutoOptions, Metadata } from '#/compiler/types'
 import { EXTENSIONS_LIST, NF_NAMES } from '#/compiler/constants'
+import { log } from 't0n/log'
 
 export async function getConfig(name = 'config'): Promise<DutoOptions> {
   let opts = {} as DutoOptions
@@ -37,7 +38,7 @@ export function preview(
   host: string = '0.0.0.0',
   port: number = 4173
 ) {
-  return Bun.serve({
+  const server = Bun.serve({
     hostname: host,
     port,
 
@@ -125,4 +126,9 @@ export function preview(
       }
     },
   })
+
+  // @ts-ignore
+  log(`Running on http://${host}:${port}${global?.__st ? dim(` in ${Math.ceil(performance.now() - global.__st)} ms`) : ''}`)
+
+  return server
 }

@@ -23,7 +23,7 @@ export default function ThemeSelect({ class: className = '' }) {
   useLayoutEffect(() => {
     selectedValue.value = getTheme()
     !unsubscribe.length && unsubscribe.push(
-      onThemeChange(handle),
+      ...onThemeChange(handle),
       on('popstate', handle),
     )
 
@@ -41,7 +41,7 @@ export default function ThemeSelect({ class: className = '' }) {
   }
 
   const containerClasses = [
-    'locale-select overflow-hidden text-ellipsis p-1 rounded-lg hover:bg-neutral-200 hover:text-zinc-900',
+    'theme-select overflow-hidden text-ellipsis p-1 rounded-lg hover:bg-neutral-200 hover:text-zinc-900',
     className,
   ].filter(Boolean).join(' ')
 

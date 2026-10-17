@@ -4,6 +4,8 @@ import { IMPORT, JSJSON } from 't0n'
 
 import type { Metadata, I18nMetadata } from '#/compiler/types'
 
+import intl from './client'
+
 export default async function getI18n(meta: Metadata) {
   let file = ''
 
@@ -66,5 +68,6 @@ export const pageRoutes = ${JSJSON(i18n.pageRoutes)}
 export const options = ${JSJSON(mod.options)}
 `
 
-  return i18n
+  intl(i18n.fallbackLocale, i18n.locales, messages, routes, i18n.routeMap)
+  return meta.i18n = i18n
 }

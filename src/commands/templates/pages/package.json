@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "duto": "workspace:*",
     "@preact/signals": "catalog:",
-    "preact": "catalog:"
+    "duto": "workspace:*",
+    "preact": "catalog:",
+    "t0n": "workspace:*"
   },
   "devDependencies": {
     "bun-types": "catalog:",

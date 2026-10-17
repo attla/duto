@@ -6,22 +6,20 @@ import { join, dirname } from 'node:path'
 import { h } from 'preact'
 import { render } from 'preact-render-to-string'
 import minify from '@minify-html/node'
+import { warn } from 't0n/log'
 
 import { DOCTYPE_RE } from './constants'
 import { getAsset, getChunk } from './assets'
 import { resolveStaticOutputPath } from './meta'
 import { setLocale } from '../i18n/client'
 
-import type { IRoute, Metadata, RouteParams, StaticProps, SummaryMetadata } from './types'
-import type { DutoOptions } from './bun-plugin'
-import { warn } from 't0n/log'
+import type { Metadata, IRoute, RouteParams, StaticProps, SummaryMetadata } from './types'
 
 
 const brCompress = promisify(brotliCompress)
 
 export async function renderPage(
   meta: Metadata,
-  config: DutoOptions,
   page: IRoute
  ) {
   const {
@@ -88,7 +86,7 @@ export async function renderPage(
     global.location.href = global.location.pathname
     // @ts-ignore
     global.window = {
-      location: global.location,
+      location: global.location, // @ts-ignore
       $duto: {
         navigate: {},
         route: { pattern: page.pattern, params: prop.routeParams, path: global.location.pathname },
@@ -118,7 +116,7 @@ export async function renderPage(
 
     html = buildHtml(page, html, Object.keys(allProps).length ? allProps : undefined)
 
-    const outFile = join(config.root, config.outDir, pathname +'.html')
+    const outFile = join(meta.root, meta.outDir, pathname +'.html')
     const outHTML = meta.minify ? minify.minify(Buffer.from(html), {}) : html
     await mkdir(dirname(outFile), {recursive: true})
     await Bun.write(outFile, outHTML)

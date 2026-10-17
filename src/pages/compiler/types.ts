@@ -1,9 +1,17 @@
+import type { BunPlugin } from 'bun'
 import type { FunctionComponent, VNode } from 'preact'
 import type { Platform } from '$/cli/types'
 
 export type PluginOptions = {
   root?: string,
   pagesDir?: string,
+}
+
+export type DutoOptions = {
+  root: string,
+  pagesDir: string,
+  outDir: string,
+  plugins: BunPlugin[],
 }
 
 export type I18nMetadata = {
@@ -29,6 +37,20 @@ export type SummaryMetadata = {
 export type Metadata = {
   root: string,
   dir: string,
+  outDir: string,
+  outPath: string,
+  plugins: BunPlugin[],
+
+
+  entry: string
+  entries: string[],
+  // graph: Map<string, Set<string>> // imports/dependecy graph
+  // reverseGraph: Map<string, Set<string>>
+  // emitted: Map<string, string> // final map of result from entries
+  // rename: [string, string][],
+  cache: Map<string, string>,
+  css?: { dest: string, href: string },
+
   type: 'pages' | 'server',
   platform: Platform,
   dev: {

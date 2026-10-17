@@ -1,4 +1,4 @@
-import { t } from 'duto'
+import { $ } from 'duto'
 
 export type Props = {
   children?: preact.ComponentChildren
@@ -25,8 +25,8 @@ export function Html({
     className,
   ].filter(Boolean).join(' ')
 
-  const _title = [name, t(title ?? '')].filter(Boolean).join(' › ')
-  const _description = t(description || title || '')
+  const _title = [name, $(title ?? '')].filter(Boolean).join(' › ')
+  const _description = $(description || title || '')
 
   return (
     <html class={_class} {...props}>

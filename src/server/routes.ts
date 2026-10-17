@@ -139,15 +139,16 @@ export async function getRoutes(
     }
   }
 
-  for await (const [file, path, mod] of scan(dirs, ['ts', 'js'])) {
-    if (!mod?.handle && !mod?.handler) continue
+  for await (const { path, fullPath, mod } of scan(dirs, ['ts', 'js'])) {
+    const _mod = await mod()
+    if (!_mod?.handle && !_mod?.handler) continue
 
     const method = extractHttpVerb(path)
     const uri = extractHttpPath(path)
 
     const noAuth = autorizedPath(uri, method.toUpperCase())
 
-    const desc = mod?.desc || {}
+    const desc = _mod?.desc || {}
     const name = desc.summary || desc.name || uri.replace(/^\//, '') || 'index'
 
     function parseRules(ruleFn: Function | undefined, fn: Function) {
@@ -198,17 +199,17 @@ export async function getRoutes(
     routes.push({
       method, path: uri,
       name: snakeCase(name),
-      file,
-      rules: mod.rules,
-      handle: mod.handle || mod.handler,
-      middlewares: mod?.middlewares?.length ? mod.middlewares.flatMap((obj: any) => {
+      file: fullPath,
+      rules: _mod.rules,
+      handle: _mod.handle || _mod.handler,
+      middlewares: _mod?.middlewares?.length ? _mod.middlewares.flatMap((obj: any) => {
         return typeof obj === 'string' ? obj : obj?.name || null
       }).filter(Boolean) as Function[] : [],
       desc: {
         ...desc,
         summary: desc.summary || desc.name || camelCase(path.replace(new RegExp(`^/(${dirs.join('|')})/`), '').replace(/\.[^/.]+(?:[.][^/.]+)*$/, '')),
-        parameters: await parseParams(mod.rules),
-        requestBody: await parseBody(mod.rules),
+        parameters: await parseParams(_mod.rules),
+        requestBody: await parseBody(_mod.rules),
         ...(noAuth ? {security: []} : {} ),
         responses: {
           ...(noAuth ? {} : {401: {description: 'Unauthorized'}} ),
@@ -219,8 +220,8 @@ export async function getRoutes(
     })
 
     const routeKey = method +'|'+ uri
-    _route(name, file)
-    _route(routeKey, file)
+    _route(name, fullPath)
+    _route(routeKey, fullPath)
   }
 
   if (length) {
@@ -314,18 +315,19 @@ function computeRouteMeta(path: string) {
 export async function getMiddlewares(dir: string = 'middlewares'): Promise<Routes> {
   const mw: Routes = []
 
-  for await (const [file, path, mod] of scan(dir, ['ts', 'js'])) {
-    if (!mod?.handle && !mod?.handler) continue
+  for await (const { path, fullPath, mod } of scan(dir, ['ts', 'js'])) {
+    const _mod = await mod()
+    if (!_mod?.handle && !_mod?.handler) continue
     // @ts-ignore
     mw.push({
-      path: mod?.path || '*',
+      path: _mod?.path || '*',
       name: snakeCase(path.replace(/\\/g, '/')
         .replace(new RegExp(`^\/(${dir})/`), '')
         .replace(/\.[jt]s$/, '')
         .replace(/\/index$/, '')
       ),
-      file,
-      handle: mod.handle || mod.handler,
+      file: fullPath,
+      handle: _mod.handle || _mod.handler,
     })
   }
 
@@ -336,12 +338,13 @@ export async function getConfigs(dir: string = 'configs'): Promise<Record<string
   if (!join(_root, dir)) return {}
   const configs: Record<string, any> = {}
 
-  for await (const [file, path, mod] of scan(dir, ['ts', 'js', 'cjs', 'mjs', 'json'])) {
+  for await (const { path, mod } of scan(dir, ['ts', 'js', 'cjs', 'mjs', 'json'])) {
     const keyPath = path.replace(/\.[^/.]+$/, '').replaceAll('/', '.').split('.').slice(2)
 
+    const _mod = await mod()
     keyPath.reduce((acc, key, index) => {
       if (index === keyPath.length - 1) {
-        acc[key] = mod.default ?? mod
+        acc[key] = _mod.default ?? _mod
       } else if (!acc[key] || typeof acc[key] !== 'object') {
         acc[key] = {}
       }

@@ -1,20 +1,20 @@
-import { dirname, extname } from 'node:path'
+import { dirname, extname, join } from 'node:path'
 
 import { getEnv, JSJSON, newID } from 't0n'
 
 import { getAliases } from './aliases'
 import { DYNAMIC_RE, INTERNAL_RE, LAYOUT_RE, NF_NAMES, FILE_EXTENSIONS, USE_RAW_RE, USE_HTML_RE } from './constants'
-import { scan } from '@/utils'
+import { _pages, scan } from '@/utils'
 
 import { USE_CLIENT_RE } from './constants'
 
 import getI18n from '../i18n/server'
-import i18n from '../i18n/client'
 
 import type {
   IRoute, RouteParam, RouteParams,
   Metadata,
-  SummaryMetadata,
+  PageModule,
+  DutoOptions,
 } from './types'
 
 export async function getPages(meta: Metadata) {
@@ -23,21 +23,22 @@ export async function getPages(meta: Metadata) {
   const pages = new Map<string, IRoute>()
   const routes: IRoute[] = []
 
-  for await (const [file, path, mod] of scan(meta.dir, FILE_EXTENSIONS)) {
-    const ext = extname(file)
+  for await (const { path, fullPath, mod, text } of scan(meta.dir, FILE_EXTENSIONS)) {
+    const ext = extname(fullPath)
     const filePath = path.split(meta.dir+'/').pop() as string
     const fileName = filePath.replace(ext, '')
     const { pattern, params } = filePathToWouterPattern(fileName)
 
-    const name = file.replace(ext, '').split('/').pop() as string
-    const content = await Bun.file(file).text()
+    const name = fullPath.replace(ext, '').split('/').pop() as string
+    const content = await text()
+    const _mod = await mod<PageModule>()
 
-    const page = {
+    const page: IRoute = {
       fileExt: ext.substring(1),
       fileName,
       filePath,
-      fullFilePath: file,
-      pattern,
+      fullFilePath: fullPath,
+      pattern, // @ts-ignore
       params,
       is404: name ? NF_NAMES.includes(name) : false,
       isDynamic: DYNAMIC_RE.test(path),
@@ -45,11 +46,11 @@ export async function getPages(meta: Metadata) {
 
       importName: newID(),
 
-      mod,
+      mod: _mod,
       content: content,
       layouts: [],
-      hasGetStaticProps: typeof mod.getStaticProps === 'function',
-      hasGetProps: typeof mod.getProps === 'function',
+      hasGetStaticProps: typeof _mod.getStaticProps === 'function',
+      hasGetProps: typeof _mod.getProps === 'function',
       useClient: USE_CLIENT_RE.test(content),
       useRaw: USE_RAW_RE.test(content),
       useHtml: USE_HTML_RE.test(content),
@@ -63,12 +64,12 @@ export async function getPages(meta: Metadata) {
     if (page.is404) {
       nf.set(page.fileName, page)
       routes.push(page)
-      pages.set(file, page)
+      pages.set(fullPath, page)
       continue
     }
 
     if (!page.isInternal)
-      pages.set(file, page)
+      pages.set(fullPath, page)
 
     if (!page.isInternal && !page.useRaw && !page.useHtml)
       routes.push(page)
@@ -78,6 +79,17 @@ export async function getPages(meta: Metadata) {
   meta.layouts = layouts
   meta.pages = pages
   meta.routes = await sortRoutes(meta, routes)
+
+  meta.entries = meta.routes.filter(r => !r.is404).map(r => r.fullFilePath)
+  meta.entries.push(meta.entry)
+
+  meta.string = `// AUTO-GENERATED FILE - DO NOT EDIT
+${meta.routes.filter(r => r.is404).map(r => `\nimport Page${r.importName + (r.hasGetProps ? `, { getProps as getProps${r.importName} }` : '')} from '${r.fullFilePath}'`).join('\n')}
+${Array.from(meta.layouts.values()).map(l => `\nimport Layout${l.importName} from '${l.fullFilePath}'`).join('\n')}
+
+export const views = [${meta.routes.map(r => `['${r.pattern}',${r.is404 ? 'Page'+ r.importName : `'${r.fullFilePath}'`},${Object.keys(r.params).length ? JSJSON(Object.entries(r.params).map(([_,v]) => v)) : '0'}${r.hasGetProps ? (r.is404 ? `,getProps${r.importName}` : `,1`) : (r.layouts.length ? ',0': '')}${r.layouts.length ? ',[' + Object.entries(r.layouts).map(([_,l]) => 'Layout'+l.importName) +']' : ''}]`).join(',')}]
+`
+
 }
 
 export async function getLayouts(meta: Metadata, path: string) {
@@ -98,31 +110,29 @@ export async function getLayouts(meta: Metadata, path: string) {
   return layouts
 }
 
-export async function getMetadata(root: string, dir: string) {
-  const meta = { root, dir, ...getEnv('duto', {}) } as Metadata
-  meta.summary = new Map<string, SummaryMetadata>()
+export async function getMetadata(conf: DutoOptions) {
+  const meta = {
+    root: conf.root,
+    dir: conf.pagesDir,
+    outDir: conf.outDir,
+    outPath: join(conf.root, conf.outDir),
+    plugins: conf.plugins,
+    ...getEnv('duto', {}),
 
-  meta.i18n = await getI18n(meta)
-  i18n(meta.i18n.fallbackLocale, meta.i18n.locales, meta.i18n.messages, meta.i18n.routes, meta.i18n.routeMap)
-
-  meta.aliases = await getAliases(root)
-
+    entry: join(_pages, 'client', 'app.tsx'),
+    entries: [] as string[],
+    // graph: new Map(),
+    // reverseGraph: new Map(),
+    // emitted: new Map(),
+    // rename: [] as [string, string][],
+    cache: new Map(),
+    summary: new Map(),
+    aliases: await getAliases(conf.root),
+  } as Metadata
+  await getI18n(meta)
   await getPages(meta)
-
-  meta.string = `// AUTO-GENERATED FILE - DO NOT EDIT
-${meta.routes.filter(r => r.is404).map(r => `\nimport Page${r.importName + (r.hasGetProps ? `, { getProps as getProps${r.importName} }` : '')} from '${r.fullFilePath}'`).join('\n')}
-${Array.from(meta.layouts.values()).map(l => `\nimport Layout${l.importName} from '${l.fullFilePath}'`).join('\n')}
-
-export const views = [${meta.routes.map(r => `['${r.pattern}',${r.is404 ? 'Page'+ r.importName : `'${r.fullFilePath}'`},${Object.keys(r.params).length ? JSJSON(Object.entries(r.params).map(([_,v]) => v)) : '0'}${r.hasGetProps ? (r.is404 ? `,getProps${r.importName}` : `,1`) : (r.layouts.length ? ',0': '')}${r.layouts.length ? ',[' + Object.entries(r.layouts).map(([_,l]) => 'Layout'+l.importName) +']' : ''}]`).join(',')}]
-
-`
-
   return meta
 }
-
-
-
-
 
 
 

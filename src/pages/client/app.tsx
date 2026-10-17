@@ -44,8 +44,7 @@ import {
 // @ts-ignore
 } from ':duto'
 // @ts-ignore
-import ':root/styles'
-
+import ':root/css'
 
 // var props = {}
 // const propKey = "props"
@@ -106,7 +105,7 @@ async function resolveRoute(
     sProps = null
 
   if (typeof Component === 'string') {
-    const mod = await import((Component[0] == '/' ? '' : '/')+ Component)
+    const mod = await import((Component[0] == '/' ? '' : '/') + Component)
     Component = mod.default
     getProps = getProps === 1 ? mod.getProps : 0
     sProps = mod.props ?? null
