@@ -2,17 +2,17 @@ import { h, type JSX } from 'preact'
 import { on, emit } from 't0n'
 import { local } from '#/client/storage'
 
-
-const sync = async () => {
-  _locale = getLocale()
+const sync = async e => {
+  _locale = e?.val ? e.val : getLocale()
   await loadLang(_locale)
-  emit('s:lang')
+  emit('@i18n', e)
 }
 
 on('popstate', sync)
 on('pushState', sync)
 on('replaceState', sync)
 on('hashchange', sync)
+on('s:lang', sync)
 
 const accepted = (lang: string | undefined, locales: string[] = [], fallback: string) => lang && locales.includes(lang) ? lang : fallback
 
@@ -71,8 +71,8 @@ const fixDate = (str: string) => str.replace(/de/g, (match, offset, val) => val.
 
 let _locales: string[] = []
 let _messages: Record<string, Record<string, string>> = {}
-let _routes: Record<string, Record<string, string>> = {}
-let _routeMap: Record<string, string> = {}
+let _paths: Record<string, Record<string, string>> = {}
+// let _routeMap: Record<string, string> = {}
 
 let _locale: string = ''
 let _detected: string = ''
@@ -97,16 +97,16 @@ export const getLocale = () => {
 }
 
 export const setLocale = async (lang: string) => {
-  await loadLang(lang)
-  cache(lang)
   _locale = accepted(lang, _locales, _detected)
+  await loadLang(_locale)
+  cache(_locale)
 }
 
 async function loadLang(lang: string) {
-  if (!_routes[lang] || !_messages[lang]) {
+  if (!_paths[lang] || !_messages[lang]) {
     const intlMod = await import('/'+ lang +'.js')
     if (!intlMod) return
-    _routes[lang] = intlMod.routes ?? intlMod.default?.routes
+    _paths[lang] = intlMod.paths ?? intlMod.default?.paths
     _messages[lang] = intlMod.messages ?? intlMod.default?.messages
   }
 }
@@ -115,13 +115,13 @@ export default async function i18n(
   fallbackLocale: string,
   locales: string[],
   messages: Record<string, Record<string, string>>,
-  routes: Record<string, Record<string, string>>,
-  routeMap: Record<string, string>,
+  paths: Record<string, Record<string, string>>,
+  // routeMap: Record<string, string>,
 ) {
   _locales = locales
   _messages = messages
-  _routes = routes
-  _routeMap = routeMap
+  _paths = paths
+  // _routeMap = routeMap
   _detected = detect(locales, fallbackLocale)
   _locale = typeof window === 'undefined' ? fallbackLocale : getLocale()
 
@@ -152,11 +152,7 @@ export const updatePickers = (lang?: string) => {
 
 export const route = (key = '', lang?: string) => {
   lang ??= accepted(lang, _locales, _locale)
-  const path = _routeMap[key]
-
-  return key
-    ? '/'+ lang +'/'+ (_routes[lang][path ? path : key] || _routes[lang]?.notfound || '')
-    : '/'+ lang
+  return (_prefixed ? '/'+ lang : '') + (key ? '/'+key.split('/').map(p => _paths[lang]?.[p] || p).join('/') : '')
 }
 
 export const redirect = (key = '', lang?: string) => {
@@ -165,17 +161,7 @@ export const redirect = (key = '', lang?: string) => {
 
   if (!location.pathname.endsWith(path)) // @ts-ignore
     self.$duto?.navigate(path)
-
-  // return '/' + lang + '/' + (key in _routes[lang] ? _routes[lang][key] : key)
 }
-// export const redirect = (r = '', lang?: string) => {
-//   lang = accepted(lang, _locales, _locale)
-//   const path = '/'+ lang + (r ? '/'+ route(r, lang) : '')
-
-//   if (!location.pathname.endsWith(path))
-//     location.pathname = path
-// }
-
 ////////////////////////////////////////////////////////////////////////////////
 type Primitives = string | number | boolean
 type Params = Record<string, Primitives> | Primitives[]
@@ -329,110 +315,3 @@ export const d = (str: string, format?: string, lang?: string) => {
     day: 'numeric',
   }).format(date))
 }
-
-// export default function i18n(
-//   fallbackLocale: string,
-//   locales: string[],
-//   messages: Record<string, Record<string, string>>,
-//   routes: Record<string, Record<string, string>>,
-//   routeMap: Record<string, string>,
-// ) {
-// 		// const fallbackLocale = 'pt-br'
-// 		// const locales = ['pt-br', 'en']
-
-// 		const localeRegex = new RegExp(`^/(${locales.join('|')})(/|$)`)
-// 		const matched = window.location.pathname.match(localeRegex)
-
-// 		const detected = detect(locales, fallbackLocale)
-// 		const locale = matched ? matched[1] : detected
-
-// 		return {
-// 			detected,
-// 			locale,
-// 			locales,
-// 			cache(val: string) {
-// 				localStorage.setItem('lang', accepted(val, locales, ''))
-// 			},
-// 			cached() {
-// 				return localStorage.lang || ''
-// 			},
-// 			updateWidth (el: HTMLSelectElement) {
-// 				if (el) {
-// 					const option = el.querySelector(`option[value="${el.value}"]`) as HTMLOptionElement
-// 					const length = option.textContent.split(' ')[0]?.length || 0
-// 					el.style.width = (length * 15.7)+ 'px'
-// 				}
-// 			},
-// 			updatePickers(lang = '') {
-// 				lang = accepted(lang, locales, locale)
-// 				document.querySelectorAll('.locale-select').forEach(el => {
-// 					const select = el.querySelector('select')
-// 					if (select) {
-// 						select.value = lang
-// 						this.updateWidth(select)
-// 					}
-// 				})
-// 			},
-// 			route(route = '', lang?: string) {
-// 				lang = accepted(lang, locales, locale)
-// 				const path = routeMap[route]
-// 				return routes[lang][path ? path : route] || routes[lang]?.notfound || undefined
-// 			},
-// 			redirect(route = '', lang?: string) {
-// 				lang = accepted(lang, locales, locale)
-// 				const path = '/'+ lang + (route ? '/'+ this.route(route, lang) : '')
-
-// 				if (!window.location.pathname.endsWith(path))
-// 					window.location.pathname = path
-//       },
-
-//       t(key: string, lang?: string) {
-//         lang ??= accepted(lang, locales, locale)
-//         const msg = messages[lang]
-
-//         if (key && !key.startsWith('_') && key in msg)
-//           return msg[key]
-
-//         return key?.replace(/^_+/, '')
-//       },
-//       r(key: string, lang?: string) {
-//         lang ??= accepted(lang, locales, locale)
-
-//         return '/' + lang + '/' + (key in routes[lang] ? routes[lang][key] : key)
-//       },
-//       d(str: string, format?: string, lang?: string) {
-//         lang ??= accepted(lang, locales, locale)
-
-//         const date = new Date(str+ 'T00:00:00')
-//         if (isNaN(date.getTime())) return str
-
-//         if (format && !['short', 'long'].includes(format)) {
-//           const year = date.getFullYear(),
-//             month = date.getMonth(),
-//             day = date.getDate(),
-//             formatter = new Intl.DateTimeFormat(lang, {month: 'long'}),
-//             monthName = formatter.format(date),
-//             shortFormatter = new Intl.DateTimeFormat(lang, {month: 'short'}),
-//             shortMonthName = shortFormatter.format(date)
-
-//           return fixDate(format
-//             .replace(/YYYY/g, year.toString())
-//             .replace(/YY/g, year.toString().slice(-2))
-//             .replace(/MMMM/g, monthName)
-//             .replace(/MMM/g, shortMonthName)
-//             .replace(/MM/g, (month + 1).toString().padStart(2, '0'))
-//             .replace(/M/g, (month + 1).toString())
-//             .replace(/DD/g, day.toString().padStart(2, '0'))
-//             .replace(/D/g, day.toString()))
-//             // .replace(/de/g, (match, offset, val) => val.lastIndexOf('de', offset - 1) === -1 ? match : '')
-//         }
-
-//         return fixDate(new Intl.DateTimeFormat(lang, {
-//           // dateStyle: 'full',
-//           year: 'numeric',
-//           month: format == 'short' ? 'short' : 'long',
-//           day: 'numeric',
-//         }).format(date))
-//       },
-// 		}
-// }

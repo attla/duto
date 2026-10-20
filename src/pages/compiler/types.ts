@@ -41,13 +41,8 @@ export type Metadata = {
   outPath: string,
   plugins: BunPlugin[],
 
-
   entry: string
   entries: string[],
-  // graph: Map<string, Set<string>> // imports/dependecy graph
-  // reverseGraph: Map<string, Set<string>>
-  // emitted: Map<string, string> // final map of result from entries
-  // rename: [string, string][],
   cache: Map<string, string>,
   css?: { dest: string, href: string },
 
@@ -62,6 +57,7 @@ export type Metadata = {
 
   aliases: Record<string, string>,
   layouts: Map<string, IRoute>, // all layouts
+  loads: Map<string, IRoute>, // all layouts
   nf: Map<string, IRoute>, // all 404
   pages: Map<string, IRoute>, // all pages
   routes: Routes, // client-side
@@ -77,6 +73,7 @@ export type PageModule<P = {}> = {
   default: Page<P>, // ComponentType<VNode<any>>,
   getStaticProps?: GetStaticProps,
   getProps?: GetProps,
+  Loading?: Page<P>,
 }
 
 /**
@@ -91,41 +88,35 @@ export type StaticProps = Record<string, unknown>
 
 export type RouteParams = Record<string, string | string[] | undefined>
 export type GetProps = (params: RouteParams) => StaticProps | Promise<StaticProps>
-export type Params = Record<string, RouteParams>
+export type Params = [string, number][]
 
-export type View = [string, Page, Params | 0, GetProps | 0 | 1 | null, Page[]]
+export type View = [string | string[], Page | string, Params | 0, GetProps | 0 | 1 | null, Page | string]
 
+export type Layout = { path: string, view: Page | string }
 export type Routes = IRoute[]
 export type IRoute = {
   content: string,
   mod: PageModule,
+
   hasGetStaticProps: boolean,
   hasGetProps: boolean,
+  hasLoading: boolean,
+
   useClient: boolean,
   useRaw: boolean,
   useHtml: boolean,
   layouts: IRoute[],
-  importName: string,
 
   props?: StaticProps,
-
-  ////////////////////////////
-
-  fileExt: string,
-  fileName: string,
-  filePath: string, // Original file path relative to pages dir, e.g. `blog/[slug].tsx`
-  fullFilePath: string,
-  pattern: string, // Wouter-compatible pattern, e.g. `/blog/:slug`
+  pattern: string | string[], // wouter-compatible pattern, e.g. `/blog/:slug`
   params: Params,
-  is404: boolean,
 
+  id: string,
+  name: string,
+  path: string,
+  // filePath: string, // original file path relative to pages dir, e.g. `blog/[slug].tsx`
+
+  is404: boolean,
   isDynamic: boolean,
   isInternal: boolean,
-}
-
-export type RouteParam = {
-  name: string,
-  optional: boolean,
-  catchAll: boolean,
-  value?: string | string[],
 }

@@ -28,7 +28,7 @@ class LocalStore<TSchema extends Record<string, unknown>> extends EventTarget {
     this.#prefix = prefix
 
     if (typeof window !== 'undefined')
-      addEventListener('storage', this.#onCrossTabChange)
+      on('storage', this.#onCrossTabChange)
   }
 
   #buildKey<K extends keyof TSchema & string>(key: K): string {

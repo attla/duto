@@ -1,11 +1,6 @@
-// 'use client'
 import { t, Link } from 'duto'
 import type { Posts } from '@/types'
-// import { Counter } from '@/components/counter2'
-
-type Props = {
-  posts?: Posts,
-}
+import { ALL_POSTS } from './[slug]'
 
 export { Html } from '@/components/html'
 
@@ -14,7 +9,12 @@ export async function getStaticProps() {
     ?.sort(() => 0.5 - Math.random())
     .slice(0, 10)
 
+  posts.unshift(...ALL_POSTS)
   return { posts }
+}
+
+export type Props = {
+  posts?: Posts,
 }
 
 export default function Blog({ posts }: Props) {
@@ -22,7 +22,7 @@ export default function Blog({ posts }: Props) {
     <>
       <h1 class="title">Blog</h1>
 
-      <div class="highlight">
+      <div class="mt-2 highlight">
         {t`b1`}&nbsp;<b><i>getStaticProps()</i></b> (SSG)
       </div>
 
@@ -30,16 +30,14 @@ export default function Blog({ posts }: Props) {
         <p class="mt-8">No posts found.</p>
       )}
 
-      <div class="mt-8 flex flex-col">
+      <div class="mt-8 flex flex-col max-w-2xl">
         {posts?.map((post) => (
-          <Link to={`/blog/${post.id}`} key={post.id}
+          <Link
+            key={post.id}
+            to={`/blog/${post.id}`}
             class="group block relative p-4 border-b border-gray-200 dark:border-zinc-700/70 transition-all duration-300 ease-out"
           >
             <div class="flex items-start gap-4">
-              <span class="text-sm font-mono text-gray-400 group-hover:text-sky-gradient mt-0.5 min-w-[24px]">
-                #{post.id}
-              </span>
-
               <div class="flex-1 min-w-0">
                 <h2 class="text-base font-medium group-hover:text-sky-gradient">
                   {post.title}
@@ -65,10 +63,9 @@ export default function Blog({ posts }: Props) {
                 </svg>
               </div>
             </div>
-
           </Link>
         ))}
-</div>
+      </div>
     </>
   )
 }

@@ -1,4 +1,5 @@
-import { local, type IStoreListener } from './storage'
+import { emit, on } from 't0n'
+import { local } from './storage'
 
 export type Theme = 'auto' | 'dark' | 'light'
 
@@ -23,10 +24,20 @@ export const setTheme = (theme: Theme) => {
     : local.remove(key)
 }
 
-export const onThemeChange = (e: IStoreListener<any>) => {
+const sync = e => {
+  setThemeAttr(e?.val ? e.val : getTheme())
+  emit('@theme', e)
+}
+
+on('popstate', sync)
+on('pushState', sync)
+on('replaceState', sync)
+on('hashchange', sync)
+on('s:theme', sync)
+
+if (typeof window === undefined) {
   const mm = match()
-	mm.addEventListener('change', e)
-  return [local.subscribe(key, e), () => mm.removeEventListener('change', e)]
+  mm.addEventListener('change', sync)
 }
 
 // export function updatePickers(theme = storedTheme || 'auto') {

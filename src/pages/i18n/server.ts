@@ -27,47 +27,65 @@ export default async function getI18n(meta: Metadata) {
   if (['locales', 'fallbackLocale', 'options'].some(i => !mod[i]))
     return {} as I18nMetadata
 
-  // const routes = Object.fromEntries(mod.locales.map(locale => [locale, ]))
+  const paths: Record<string, Record<string, string>> = {}
+  const routes: Record<string, Record<string, string[]>> = {}
 
-  const routes: Record<string, Record<string, string>> = {}
   const messages: Record<string, Record<string, string>> = {}
   for (const locale of mod.locales) {
     const intlPath = join(meta.root, 'i18n', locale + '.ts')
     if (existsSync(intlPath)) {
-      const intlMod = await IMPORT<{default:{routes: Record<string, string>, messages: Record<string, string>}}>(intlPath)
-      routes[locale] = intlMod.default.routes
+      const intlMod = await IMPORT<{default:{paths: Record<string, string>, messages: Record<string, string>}}>(intlPath)
+      paths[locale] = intlMod.default.paths
       messages[locale] = intlMod.default.messages
     }
   }
 
+  for (const r of meta.routes) {
+    if (typeof r.pattern !== 'string') return r
+    const path = r.pattern.split('/')
+    const _paths = Array.from(new Set(mod.locales.map(locale => path.map(p => paths[locale]?.[p] || p).join('/'))))
+    // return mod.locales.map(locale => path.map(p => p.includes(':') || p.includes('?') || p.includes('*') ? p : ))
+
+    r.pattern = _paths.length === 1 ? _paths[0] : _paths
+  }
+
+  // console.log(meta.routes)
+  // meta.routes.map(r => console.log(r.pattern))
+  // rrrr.map(r => console.log(r))
+  // process.exit(0)
+
+
+
   const i18n: I18nMetadata = {
     ...mod,
-    routes,
+    // routes,
     messages,
-    routeMap: Object.fromEntries(
-      Object.values(routes)
-        .map(paths => Object.entries(paths).map(([key, path]) => path == key ? 0 : [path, key]).filter(Boolean))
-        .flat() as Array<[string, string]>
-    ),
-    pageRoutes: [],
+    // routeMap: Object.fromEntries(
+    //   Object.values(paths)
+    //     .map(paths => Object.entries(paths).map(([key, path]) => path == key ? 0 : [path, key]).filter(Boolean))
+    //     .flat() as Array<[string, string]>
+    // ),
+    // pageRoutes: [],
     string: '',
   }
 
-  Object.entries(routes)
-    .forEach(([locale, paths]) => {
-       Object.entries(paths)
-        .forEach(([route, path]) => i18n.pageRoutes.push({ locale, path }))
-    })
+  // Object.entries(routes)
+  //   .forEach(([locale, paths]) => {
+  //      Object.entries(paths)
+  //       .forEach(([route, path]) => i18n.pageRoutes.push({ locale, path }))
+  //   })
 
   i18n.string = `export const fallbackLocale = ${JSJSON(mod.fallbackLocale)}
+export const options = ${JSJSON(mod.options)}
 export const locales = ${JSJSON(mod.locales)}
 export const messages = ${JSJSON(messages)}
-export const routes = ${JSJSON(routes)}
-export const routeMap = ${JSJSON(i18n.routeMap)}
-export const pageRoutes = ${JSJSON(i18n.pageRoutes)}
-export const options = ${JSJSON(mod.options)}
-`
 
-  intl(i18n.fallbackLocale, i18n.locales, messages, routes, i18n.routeMap)
+export const paths = ${JSJSON(paths)}
+`
+// export const routes = ${JSJSON(routes)}
+// export const routeMap = ${JSJSON(i18n.routeMap)}
+  // export const pageRoutes = ${JSJSON(i18n.pageRoutes)}
+
+  intl(i18n.fallbackLocale, i18n.locales, messages, paths, i18n.routeMap)
   return meta.i18n = i18n
 }

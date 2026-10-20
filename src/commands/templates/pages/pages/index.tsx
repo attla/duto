@@ -10,7 +10,7 @@ export default function Index() {
       <div class="divide-y divide-gray-300 dark:divide-zinc-700/70">
         {[
           ['https://hub.bi/docs/duto', t`gotodocs`],
-          ['/blog', t`Blog`],
+          ['blog', t`Blog`],
         ].map(([href, label]) => (
           <Link
             href={href}

@@ -1,16 +1,15 @@
-
 import { t, Link } from 'duto'
+import { JSJSON } from 't0n'
 import type { Post, Posts } from '@/types'
-import { JSJSON } from '../../../../packages/t0n/src/json'
 import NotFound from '../404'
 
 // Mock data
-const ALL_POSTS: Posts = [
+export const ALL_POSTS: Posts = [
   {
     id: "hello-world",
     title: "Hello World",
     body:
-      "Welcome to my blog! This post was statically generated at build time using `getStaticProps`. When navigating here via the SPA router, `getProps` fetches the same data dynamically.",
+      "Welcome to my blo! This post was statically generated at build time using `getStaticProps`. When navigating here via the SPA router, `getProps` fetches the same data dynamically.",
   },
   {
     id: "getting-started",
@@ -18,44 +17,42 @@ const ALL_POSTS: Posts = [
     body:
       "Static site generation combines the best of both worlds: fast initial loads with the flexibility of dynamic data fetching.",
   },
-  {
-    id: "signals-islands",
-    title: "Signals & Islands",
-    body:
-      "Preact Signals give us fine-grained reactivity. Combined with the islands architecture, we can ship near-zero JS by default.",
-  },
 ]
-
 
 export { Html } from '@/components/html'
 
-/**
- * Returns one entry per post.
- * Each entry MUST include the route param (`slug`) plus any page props.
- * The build script uses `slug` to compute the output path.
- */
 export function getStaticProps() {
   return ALL_POSTS.map((post) => ({
-    slug: post.id, // required: matches [slug] in the filename
+    slug: post.id, // required: matches [slug] in the filename to compute the output path
     post,
   }))
 }
 
-// ── Browser-time data ─────────────────────────────────────────────────────────
+// called during SPA navigation. Receives route params from wouter
+export async function getProps({ slug }: { slug?: string }, ssg: Props[]) {
+  await new Promise((resolve) => setTimeout(resolve, 650))
+  const ssgPost = ssg.find(m => m.slug === slug)
+  if (ssgPost) return { post: ssgPost.post }
 
-/**
- * Called during SPA navigation. Receives route params from wouter.
- */
-export async function getProps({ slug }: { slug?: string }) {
-  const post = (await (await fetch('https://jsonplaceholder.typicode.com/posts/'+ slug)).json())
+  const post = (await (await fetch('https://jsonplaceholder.typicode.com/posts/' + slug)).json())
   return { post }
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
-type Props = {
+export type Props = {
   post?: Post | null,
   slug?: string,
+}
+
+export function Loading() {
+  return (
+    <article class="mt-6 w-xl">
+      <div>
+        <div class="animate-pulse rounded-md bg-gray-300 w-18 h-6" />
+      </div>
+      <div class="mt-2 animate-pulse rounded-md bg-gray-300 w-48 h-10" />
+      <div class="mt-6 animate-pulse rounded-md bg-gray-300 w-full h-24" />
+    </article>
+  )
 }
 
 export default function BlogPost({ post, slug }: Props) {

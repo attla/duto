@@ -45,8 +45,8 @@ export default class Island extends HTMLElement {
   }
 
   disconnectedCallback() {
-  	// document.removeEventListener('d:after-swap', this.unmount);
-  	// document.addEventListener('d:after-swap', this.unmount, { once: true });
+  	// document.removeEventListener('@after-swap', this.unmount);
+  	// document.addEventListener('@after-swap', this.unmount, { once: true });
 
     this.unmount()
   }
@@ -83,7 +83,7 @@ export default class Island extends HTMLElement {
     // represents that it has not completed hydration yet.
     const parent = this.parentElement?.closest('i-s')
     if (parent) {
-      parent.addEventListener('d:hydrate', this.hydrate, { once: true })
+      parent.addEventListener('@hydrate', this.hydrate, { once: true })
       return
     }
 
@@ -127,10 +127,10 @@ export default class Island extends HTMLElement {
     await hydrator(this, this.Component, props, slots)
 
     this._hydrated = true
-    this.dispatchEvent(new CustomEvent('d:hydrate'))
+    this.dispatchEvent(new CustomEvent('@hydrate'))
   }
 
   unmount() {
-    if (!this.isConnected) this.dispatchEvent(new CustomEvent('d:unmount'))
+    if (!this.isConnected) this.dispatchEvent(new CustomEvent('@unmount'))
   }
 }

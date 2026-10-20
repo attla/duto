@@ -1,7 +1,7 @@
 import { on } from 't0n'
 import { useSignal } from '@preact/signals'
 import { useLayoutEffect } from 'preact/hooks'
-import { t, getTheme, setTheme, onThemeChange } from 'duto'
+import { t, getTheme, setTheme } from 'duto'
 
 import Select from './select'
 
@@ -14,21 +14,16 @@ function ThemeIcon(props: any) {
 export default function ThemeSelect({ class: className = '' }) {
   const options = [['auto', t`auto`], ['dark', t`dark`], ['light', t`light`]].map(([value, label]) => ({ value, label, selected: false }))
   const selectedValue = useSignal(getTheme())
-  const unsubscribe: (() => void)[] = []
-  const handle = (e: any, theme?: string) => {
-    theme ??= getTheme()
-    selectedValue.value = theme
-  }
+  let unsubscribe: (() => void) | null = null
+  const handle = e => selectedValue.value = e?.val ? e.val : getTheme()
 
   useLayoutEffect(() => {
     selectedValue.value = getTheme()
-    !unsubscribe.length && unsubscribe.push(
-      ...onThemeChange(handle),
-      on('popstate', handle),
-    )
+    if (!unsubscribe)
+      unsubscribe = on('@theme', handle)
 
     return () => {
-      unsubscribe.forEach(unsub => unsub?.())
+      unsubscribe?.()
     }
   }, [])
 

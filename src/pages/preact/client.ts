@@ -76,7 +76,7 @@ export default async (
 
   hydrate(child, el)
 
-  el.addEventListener('d:unmount', () => {
+  el.addEventListener('@unmount', () => {
     render(null, el)
 
     // 2. Remove o elemento do DOM apenas após o desmonte,

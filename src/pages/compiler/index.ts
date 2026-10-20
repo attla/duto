@@ -6,14 +6,14 @@ import { join, dirname } from 'node:path'
 import { h } from 'preact'
 import { render } from 'preact-render-to-string'
 import minify from '@minify-html/node'
-import { warn } from 't0n/log'
 
 import { DOCTYPE_RE } from './constants'
 import { getAsset, getChunk } from './assets'
-import { resolveStaticOutputPath } from './meta'
+import { resolveStaticOutputPath } from './routes'
 import { setLocale } from '../i18n/client'
 
 import type { Metadata, IRoute, RouteParams, StaticProps, SummaryMetadata } from './types'
+import { logLevel } from 't0n/log'
 
 
 const brCompress = promisify(brotliCompress)
@@ -25,16 +25,14 @@ export async function renderPage(
   const {
     mod,
     layouts,
-    hasGetProps, hasGetStaticProps,
+    hasGetStaticProps,
     useClient,
   } = page
-  if (!mod?.default)
-    return warn(`No default export in ${page.filePath} — skipped`)
 
   if (page.isInternal || (!page.useRaw && !page.useHtml && page.is404) || (page.isDynamic && !hasGetStaticProps))
-    return meta.summary.set('/'+ page.fileName, { type: 2, path: '/'+ page.fileName, size: 0, sizeBr: 0, sizeJS: 0 })
+    return meta.summary.set('/'+ page.name, { type: 2, path: '/'+ page.name, size: 0, sizeBr: 0, sizeJS: 0 })
 
-  const { filePath, pattern, params } = page
+  const { path, params } = page
 
   let props = []
   if (hasGetStaticProps) {
@@ -43,7 +41,7 @@ export async function renderPage(
       const _sProps = await Promise.resolve(mod.getStaticProps!())
       sProps = Array.isArray(_sProps) ? _sProps : [_sProps]
     } catch (e) {
-      return console.error(`getStaticProps failed in ${filePath}: ${e}`)
+      return console.error(`getStaticProps failed in ${path}: ${e}`)
     }
 
     for (const entry of sProps) {
@@ -97,6 +95,7 @@ export async function renderPage(
 
     if (!useClient) {
       try {
+        logLevel('none')
         let el = h(mod.default, allProps as any)
         for (const layout of layouts)
           el = h(layout.mod.default, null, el)
@@ -108,9 +107,11 @@ export async function renderPage(
 
         html = render(el)
       } catch (e) {
-        console.error(`  SSR render failed for ${filePath}: ${e}`)
+        console.error(`  SSR render failed for ${path}: ${e}`)
         console.warn(e)
         html = ''
+      } finally {
+        logLevel()
       }
     }
 
@@ -123,7 +124,7 @@ export async function renderPage(
 
     const key = '/'+ pathname
     if (page.isDynamic) {
-      const _key = '/'+ page.fileName
+      const _key = '/'+ page.name
       if (!meta.summary.has(_key)) {
         const ddata = {
           path: _key,
@@ -179,7 +180,6 @@ function buildHtml(
 
   const prepend = assets.map(asset => {
     const href = getAsset(asset)
-    // return href ? `<link rel="stylesheet" href="${href}">` : null
     return href ? `<link rel="preload" href="${href}" as="style" onload="this.rel='stylesheet'">` : null
   }).filter(Boolean).join('')
 
@@ -193,11 +193,9 @@ function buildHtml(
 
   if (page.useHtml) props.__raw = true
 
-  // const append = (Object.keys(props).length ? `<script>(self.$duto=self.$duto||{}).props=${JSJSON(props)}</script>` : '') + assets.map(file => {
   const append = assets.map(file => {
     const src = getChunk(file)
     return src ? `<script type=module src="${src}"></script>` : null
-    // return src ? `<script type=module src="${src}"${(Object.keys(props).length ? ` props='${JSON.stringify(props)}'` : '')}></script>` : null
   }).filter(Boolean).join('')
 
   if (html.includes('</body>'))

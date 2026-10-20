@@ -3,6 +3,8 @@ export const EXT_RE = /\.(tsx?|jsx?)$/i
 export const DYNAMIC_RE = /\[/
 export const INTERNAL_RE = /(?:.*\/)?_?(layout|error|template|loading)\.(tsx?|jsx?)$/i
 export const LAYOUT_RE = /(?:.*\/)?_?(layout)\.(tsx?|jsx?)$/i
+export const ERROR_RE = /(?:.*\/)?_?(error)\.(tsx?|jsx?)$/i
+export const LOADING_RE = /(?:.*\/)?_?(loading)\.(tsx?|jsx?)$/i
 export const DOCTYPE_RE = /<!doctype html/i
 
 // export const USE_CLIENT_RE = /^[\s\r\n]*["']use client["'](?=[\s\r\n]|$)/m

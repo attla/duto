@@ -1,11 +1,10 @@
-import { local } from '#/client/storage'
+import { on } from 't0n'
 import { route } from '../i18n/client'
 
-addEventListener('d:navigate', e => {
+addEventListener('@navigate', e => {
   const el = (e as CustomEvent<HTMLAnchorElement>).detail
-
-  console.warn('d:navigate', el) // @ts-ignore
-  if (el.href) self.$duto.navigate?.(el.href)
+  // @ts-ignore
+  if (el.href) $duto.navigate?.(el.href)
 })
 
 export default class Link extends HTMLAnchorElement {
@@ -29,7 +28,7 @@ export default class Link extends HTMLAnchorElement {
 
   connectedCallback() {
     this.#href = this.getAttribute('href') // @ts-ignore
-    this.#unsubscribe = local.subscribe('lang', e => this.build(e?.val))
+    this.#unsubscribe = on('@i18n', e => this.build(e?.val))
 
     document.readyState === 'interactive' || document.readyState === 'complete'
       ? this.build()
@@ -61,7 +60,7 @@ export default class Link extends HTMLAnchorElement {
 
     e.preventDefault()
     if (this.hasAttribute('href'))
-      self.dispatchEvent(new CustomEvent('d:navigate', { detail: this }))
+      self.dispatchEvent(new CustomEvent('@navigate', { detail: this }))
 
     // TODO: scroll from #hash to elements
   }
